@@ -89,7 +89,7 @@ struct JournalListView: View {
         HStack {
             Text("마이로그")
                 .font(.largeTitle.bold())
-                .foregroundStyle(JournalTheme.titleText)
+                .foregroundStyle(JournalTheme.text)
 
             Spacer()
 
@@ -102,8 +102,7 @@ struct JournalListView: View {
                     .font(.title3.weight(.bold))
                     .foregroundStyle(JournalTheme.accent)
                     .frame(width: 52, height: 52)
-                    .background(Circle().fill(Color.white.opacity(0.55)))
-                    .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 1))
+                    .glassCard(cornerRadius: 26)
             }
             .accessibilityLabel("검색 닫기")
 

@@ -15,13 +15,13 @@ struct JournalSearchBar: View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
                 .font(.title3)
-                .foregroundStyle(JournalTheme.secondaryText)
+                .foregroundStyle(JournalTheme.subText)
 
             TextField(
                 "",
                 text: $text,
                 prompt: Text("제목, 본문, 카테고리, 태그 검색")
-                    .foregroundStyle(JournalTheme.secondaryText.opacity(0.6))
+                    .foregroundStyle(JournalTheme.subText.opacity(0.6))
             )
             .focused(isFocused)
             .tint(JournalTheme.accent)
@@ -29,9 +29,7 @@ struct JournalSearchBar: View {
         }
         .padding(.horizontal, 18)
         .frame(height: 56)
-        .background(Capsule().fill(Color.white.opacity(0.45)))
-        .overlay(Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1.5))
-        .shadow(color: JournalTheme.accent.opacity(0.12), radius: 12, y: 4)
+        .glassCard(cornerRadius: 28)
     }
 }
 

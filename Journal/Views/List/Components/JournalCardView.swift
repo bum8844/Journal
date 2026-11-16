@@ -15,17 +15,17 @@ struct JournalCardView: View {
             HStack(alignment: .top) {
                 Text(journal.title)
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(JournalTheme.titleText)
+                    .foregroundStyle(JournalTheme.text)
                     .lineLimit(1)
 
                 Spacer(minLength: 8)
 
                 Text(journal.category)
                     .font(.footnote)
-                    .foregroundStyle(JournalTheme.accent)
+                    .foregroundStyle(JournalTheme.badgeText)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(Capsule().fill(JournalTheme.badgeBackground))
+                    .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
             }
 
             if !journal.tags.isEmpty {
@@ -37,20 +37,12 @@ struct JournalCardView: View {
 
             Text(journal.createdAt.koreanDateString)
                 .font(.subheadline)
-                .foregroundStyle(JournalTheme.secondaryText)
+                .foregroundStyle(JournalTheme.subText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
-        .background(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(Color.white.opacity(0.45))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
-        )
-        .shadow(color: JournalTheme.accent.opacity(0.12), radius: 14, y: 6)
+        .glassCard(cornerRadius: 32)
     }
 }
 

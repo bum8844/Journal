@@ -16,14 +16,14 @@ struct FilterChipView: View {
         Button(action: action) {
             Text(title)
                 .font(.body)
-                .foregroundStyle(isSelected ? Color.white : JournalTheme.titleText)
+                .foregroundStyle(isSelected ? Color.white : JournalTheme.chipText)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
                 .background(
-                    Capsule().fill(isSelected ? JournalTheme.accent : Color.white.opacity(0.55))
+                    Capsule().fill(isSelected ? JournalTheme.accent : JournalTheme.glassFill)
                 )
                 .overlay(
-                    Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1)
+                    Capsule().strokeBorder(JournalTheme.glassBorder, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
