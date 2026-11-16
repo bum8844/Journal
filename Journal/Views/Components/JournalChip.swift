@@ -8,19 +8,25 @@ struct JournalChip: View {
     var trailingSystemImage: String?
     let action: () -> Void
 
+    @Environment(\.isEnabled) private var isEnabled
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text(title)
                 if let trailingSystemImage {
-                    Image(systemName: trailingSystemImage).font(.caption2.weight(.bold))
+                    Image(systemName: trailingSystemImage)
+                        .font(.caption.weight(.bold))
+                        .opacity(0.8)
                 }
             }
-            .font(.footnote.weight(isSelected ? .semibold : .regular))
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isSelected ? Color.accentColor : Color(uiColor: .secondarySystemFill), in: Capsule())
+            .font(.body.weight(isSelected ? .semibold : .regular))
+            .foregroundStyle(isSelected ? Color.white : JournalTheme.chipText)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(Capsule().fill(isSelected ? JournalTheme.accent : JournalTheme.glassFill))
+            .overlay(Capsule().strokeBorder(JournalTheme.glassBorder, lineWidth: 1))
+            .opacity(isEnabled ? 1 : 0.5)
         }
         // 목록·폼 행 안에서도 칩마다 따로 눌리도록 합니다.
         .buttonStyle(.plain)

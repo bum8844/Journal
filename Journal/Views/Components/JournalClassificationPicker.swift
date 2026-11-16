@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 분류 선택 UI. 카테고리 한 개와 태그 여러 개를 고릅니다.
-/// `Form` 안에 넣으면 "카테고리", "태그" 두 섹션으로 표시됩니다.
+/// ScrollView나 VStack 안에 그대로 넣어 쓰며, "카테고리", "태그" 두 묶음으로 표시됩니다.
 struct JournalClassificationPicker: View {
     @Binding var category: String
     @Binding var tags: [String]
@@ -18,12 +18,13 @@ struct JournalClassificationPicker: View {
     }
 
     var body: some View {
-        Section("카테고리") {
-            TextField("카테고리 직접 입력", text: $category)
+        VStack(alignment: .leading, spacing: 20) {
+            group("카테고리") {
+                TextField("직접 입력", text: $category)
+                    .fieldStyle()
 
-            if !categorySuggestions.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                if !categorySuggestions.isEmpty {
+                    FlowLayout(spacing: 8) {
                         ForEach(categorySuggestions, id: \.self) { name in
                             JournalChip(title: name, isSelected: category == name) {
                                 category = name
@@ -32,12 +33,10 @@ struct JournalClassificationPicker: View {
                     }
                 }
             }
-        }
 
-        Section("태그") {
-            if !tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+            group("태그") {
+                if !tags.isEmpty {
+                    FlowLayout(spacing: 8) {
                         ForEach(tags, id: \.self) { tag in
                             JournalChip(title: "#\(tag)", isSelected: true, trailingSystemImage: "xmark") {
                                 tags.removeAll { $0 == tag }
@@ -45,26 +44,35 @@ struct JournalClassificationPicker: View {
                         }
                     }
                 }
-            }
 
-            HStack {
-                TextField("태그 입력", text: $tagInput)
-                    .textInputAutocapitalization(.never)
-                    .submitLabel(.done)
-                    .onSubmit(commitTagInput)
-                JournalChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
-                    .disabled(JournalDatabase.normalizedTag(tagInput) == nil)
-            }
+                HStack(spacing: 10) {
+                    TextField("태그 입력", text: $tagInput)
+                        .textInputAutocapitalization(.never)
+                        .submitLabel(.done)
+                        .onSubmit(commitTagInput)
+                        .fieldStyle()
 
-            if !unselectedTagSuggestions.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                    JournalChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
+                        .disabled(JournalDatabase.normalizedTag(tagInput) == nil)
+                }
+
+                if !unselectedTagSuggestions.isEmpty {
+                    FlowLayout(spacing: 8) {
                         ForEach(unselectedTagSuggestions, id: \.self) { tag in
                             JournalChip(title: "#\(tag)") { tags.append(tag) }
                         }
                     }
                 }
             }
+        }
+    }
+
+    private func group<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(JournalTheme.subText)
+            content()
         }
     }
 
@@ -79,7 +87,7 @@ struct JournalClassificationPicker: View {
     @Previewable @State var tags = ["swift"]
     @Previewable @State var tagInput = ""
 
-    Form {
+    ScrollView {
         JournalClassificationPicker(
             category: $category,
             tags: $tags,
@@ -87,5 +95,7 @@ struct JournalClassificationPicker: View {
             categorySuggestions: ["공부", "업무", "운동"],
             tagSuggestions: ["swift", "독서", "러닝"]
         )
+        .padding(20)
     }
+    .journalBackground()
 }
