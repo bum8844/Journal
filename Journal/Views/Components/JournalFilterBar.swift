@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 필터 UI. 카테고리 하나와 태그 여러 개를 골라 목록을 좁힙니다.
 /// 아무것도 고르지 않으면 필터가 꺼진 상태이고, "필터 해제"를 누르면 모두 초기화됩니다.
-struct MyLogFilterBar: View {
+struct JournalFilterBar: View {
     @Binding var selectedCategory: String?
     @Binding var selectedTags: Set<String>
 
@@ -18,11 +18,11 @@ struct MyLogFilterBar: View {
             if !categories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        MyLogChip(title: "전체", isSelected: selectedCategory == nil) {
+                        JournalChip(title: "전체", isSelected: selectedCategory == nil) {
                             selectedCategory = nil
                         }
                         ForEach(categories, id: \.self) { name in
-                            MyLogChip(title: name, isSelected: selectedCategory == name) {
+                            JournalChip(title: name, isSelected: selectedCategory == name) {
                                 // 선택된 카테고리를 다시 누르면 해제합니다.
                                 selectedCategory = (selectedCategory == name) ? nil : name
                             }
@@ -35,7 +35,7 @@ struct MyLogFilterBar: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ForEach(tags, id: \.self) { tag in
-                            MyLogChip(title: "#\(tag)", isSelected: selectedTags.contains(tag)) {
+                            JournalChip(title: "#\(tag)", isSelected: selectedTags.contains(tag)) {
                                 if selectedTags.contains(tag) {
                                     selectedTags.remove(tag)
                                 } else {
@@ -54,7 +54,7 @@ struct MyLogFilterBar: View {
                 } label: {
                     Label("필터 해제", systemImage: "xmark.circle")
                         .font(.footnote)
-                        .foregroundStyle(MyLogTheme.subText)
+                        .foregroundStyle(JournalTheme.subText)
                 }
                 .buttonStyle(.plain)
             }

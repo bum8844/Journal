@@ -1,15 +1,15 @@
 import SwiftUI
 import SwiftData
 
-/// 마이로그 작성·편집 폼. `myLog`이 nil이면 새로 만들고, 있으면 편집합니다.
-struct MyLogFormView: View {
+/// 저널 작성·편집 폼. `journal`이 nil이면 새로 만들고, 있으면 편집합니다.
+struct JournalFormView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    /// 태그 추천에 쓰기 위해 기존 마이로그를 조회합니다.
-    @Query private var allMyLogs: [JournalDatabase]
+    /// 태그 추천에 쓰기 위해 기존 저널을 조회합니다.
+    @Query private var allJournals: [JournalDatabase]
 
-    let myLog: JournalDatabase?
+    let journal: JournalDatabase?
 
     @State private var title: String
     @State private var content: String
@@ -17,12 +17,12 @@ struct MyLogFormView: View {
     @State private var tags: [String]
     @State private var tagInput = ""
 
-    init(myLog: JournalDatabase? = nil) {
-        self.myLog = myLog
-        _title = State(initialValue: myLog?.title ?? "")
-        _content = State(initialValue: myLog?.content ?? "")
-        _category = State(initialValue: myLog?.category ?? "")
-        _tags = State(initialValue: myLog?.tags ?? [])
+    init(journal: JournalDatabase? = nil) {
+        self.journal = journal
+        _title = State(initialValue: journal?.title ?? "")
+        _content = State(initialValue: journal?.content ?? "")
+        _category = State(initialValue: journal?.category ?? "")
+        _tags = State(initialValue: journal?.tags ?? [])
     }
 
     private var canSave: Bool {
@@ -32,12 +32,12 @@ struct MyLogFormView: View {
 
     /// 이미 만든 카테고리 목록. 입력창에 추천으로 보여줍니다.
     private var existingCategories: [String] {
-        Set(allMyLogs.map(\.category)).sorted()
+        Set(allJournals.map(\.category)).sorted()
     }
 
     /// 이미 쓴 태그 목록. 입력창에 추천으로 보여줍니다.
     private var existingTags: [String] {
-        Set(allMyLogs.flatMap(\.tags)).sorted()
+        Set(allJournals.flatMap(\.tags)).sorted()
     }
 
     var body: some View {
@@ -46,16 +46,16 @@ struct MyLogFormView: View {
                 Section("제목") {
                     TextField("제목", text: $title)
                 }
-                .listRowBackground(MyLogTheme.glassFill)
+                .listRowBackground(JournalTheme.glassFill)
 
                 Section("본문") {
                     TextEditor(text: $content)
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 160)
                 }
-                .listRowBackground(MyLogTheme.glassFill)
+                .listRowBackground(JournalTheme.glassFill)
 
-                MyLogClassificationPicker(
+                JournalClassificationPicker(
                     category: $category,
                     tags: $tags,
                     tagInput: $tagInput,
@@ -64,8 +64,8 @@ struct MyLogFormView: View {
                 )
             }
             .scrollContentBackground(.hidden)
-            .myLogBackground()
-            .navigationTitle(myLog == nil ? "새 마이로그" : "마이로그 편집")
+            .journalBackground()
+            .navigationTitle(journal == nil ? "새 저널" : "저널 편집")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -86,11 +86,11 @@ struct MyLogFormView: View {
 
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let trimmedCategory = JournalDatabase.normalizedCategory(category) else { return }
-        if let myLog {
-            myLog.title = trimmedTitle
-            myLog.content = content
-            myLog.category = trimmedCategory
-            myLog.tags = tags
+        if let journal {
+            journal.title = trimmedTitle
+            journal.content = content
+            journal.category = trimmedCategory
+            journal.tags = tags
         } else {
             modelContext.insert(
                 JournalDatabase(title: trimmedTitle, content: content, category: trimmedCategory, tags: tags)
@@ -101,6 +101,6 @@ struct MyLogFormView: View {
 }
 
 #Preview {
-    MyLogFormView()
+    JournalFormView()
         .modelContainer(for: JournalDatabase.self, inMemory: true)
 }

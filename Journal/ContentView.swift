@@ -10,8 +10,8 @@ import SwiftData
 
 struct ContentView: View {
     var body: some View {
-        MyLogListView()
-            .tint(MyLogTheme.accent)
+        JournalListView()
+            .tint(JournalTheme.accent)
             .fontDesign(.rounded)
     }
 }

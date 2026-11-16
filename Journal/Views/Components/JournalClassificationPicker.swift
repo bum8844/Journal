@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 분류 선택 UI. 카테고리 한 개와 태그 여러 개를 고릅니다.
 /// `Form` 안에 넣으면 "카테고리", "태그" 두 섹션으로 표시됩니다.
-struct MyLogClassificationPicker: View {
+struct JournalClassificationPicker: View {
     @Binding var category: String
     @Binding var tags: [String]
     /// 입력창에 남아 있는 태그 텍스트. 저장 시 부모 뷰가 함께 반영할 수 있도록 바깥에서 받습니다.
@@ -25,7 +25,7 @@ struct MyLogClassificationPicker: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ForEach(categorySuggestions, id: \.self) { name in
-                            MyLogChip(title: name, isSelected: category == name) {
+                            JournalChip(title: name, isSelected: category == name) {
                                 category = name
                             }
                         }
@@ -33,14 +33,14 @@ struct MyLogClassificationPicker: View {
                 }
             }
         }
-        .listRowBackground(MyLogTheme.glassFill)
+        .listRowBackground(JournalTheme.glassFill)
 
         Section("태그") {
             if !tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ForEach(tags, id: \.self) { tag in
-                            MyLogChip(title: "#\(tag)", isSelected: true, trailingSystemImage: "xmark") {
+                            JournalChip(title: "#\(tag)", isSelected: true, trailingSystemImage: "xmark") {
                                 tags.removeAll { $0 == tag }
                             }
                         }
@@ -53,7 +53,7 @@ struct MyLogClassificationPicker: View {
                     .textInputAutocapitalization(.never)
                     .submitLabel(.done)
                     .onSubmit(commitTagInput)
-                MyLogChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
+                JournalChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
                     .disabled(JournalDatabase.normalizedTag(tagInput) == nil)
             }
 
@@ -61,13 +61,13 @@ struct MyLogClassificationPicker: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ForEach(unselectedTagSuggestions, id: \.self) { tag in
-                            MyLogChip(title: "#\(tag)") { tags.append(tag) }
+                            JournalChip(title: "#\(tag)") { tags.append(tag) }
                         }
                     }
                 }
             }
         }
-        .listRowBackground(MyLogTheme.glassFill)
+        .listRowBackground(JournalTheme.glassFill)
     }
 
     private func commitTagInput() {

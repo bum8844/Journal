@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// 마이로그 목록과 카테고리·태그 필터
-struct MyLogListView: View {
+/// 저널 목록과 카테고리·태그 필터
+struct JournalListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \JournalDatabase.createdAt, order: .reverse) private var myLogs: [JournalDatabase]
+    @Query(sort: \JournalDatabase.createdAt, order: .reverse) private var journals: [JournalDatabase]
 
     @State private var selectedCategory: String?
     @State private var selectedTags: Set<String> = []
@@ -12,19 +12,19 @@ struct MyLogListView: View {
     @State private var isSearching = false
     @State private var searchText = ""
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var editingMyLog: JournalDatabase?
+    @State private var editingJournal: JournalDatabase?
 
     /// 필터를 적용한 목록. 필터가 없으면 전체입니다.
-    private var filteredMyLogs: [JournalDatabase] {
-        JournalDatabase.filter(myLogs, category: selectedCategory, tags: selectedTags, query: searchText)
+    private var filteredJournals: [JournalDatabase] {
+        JournalDatabase.filter(journals, category: selectedCategory, tags: selectedTags, query: searchText)
     }
 
     private var availableCategories: [String] {
-        Set(myLogs.map(\.category)).sorted()
+        Set(journals.map(\.category)).sorted()
     }
 
     private var availableTags: [String] {
-        Set(myLogs.flatMap(\.tags)).sorted()
+        Set(journals.flatMap(\.tags)).sorted()
     }
 
     var body: some View {
@@ -37,8 +37,8 @@ struct MyLogListView: View {
                 }
 
                 List {
-                    if !myLogs.isEmpty {
-                        MyLogFilterBar(
+                    if !journals.isEmpty {
+                        JournalFilterBar(
                             selectedCategory: $selectedCategory,
                             selectedTags: $selectedTags,
                             categories: availableCategories,
@@ -47,11 +47,11 @@ struct MyLogListView: View {
                         .glassListRow()
                     }
 
-                    ForEach(filteredMyLogs) { myLog in
+                    ForEach(filteredJournals) { journal in
                         Button {
-                            editingMyLog = myLog
+                            editingJournal = journal
                         } label: {
-                            MyLogRow(myLog: myLog)
+                            JournalRow(journal: journal)
                         }
                         .buttonStyle(.plain)
                         .glassListRow()
@@ -61,42 +61,42 @@ struct MyLogListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .overlay {
-                    if myLogs.isEmpty {
-                        ContentUnavailableView("마이로그가 없습니다", systemImage: "square.and.pencil",
-                                               description: Text("오른쪽 위 + 버튼으로 첫 마이로그를 작성해 보세요."))
-                    } else if filteredMyLogs.isEmpty {
-                        ContentUnavailableView("조건에 맞는 마이로그가 없습니다", systemImage: "line.3.horizontal.decrease.circle",
+                    if journals.isEmpty {
+                        ContentUnavailableView("저널이 없습니다", systemImage: "square.and.pencil",
+                                               description: Text("오른쪽 위 + 버튼으로 첫 저널을 작성해 보세요."))
+                    } else if filteredJournals.isEmpty {
+                        ContentUnavailableView("조건에 맞는 저널이 없습니다", systemImage: "line.3.horizontal.decrease.circle",
                                                description: Text("검색어나 필터를 해제하면 전체 목록이 표시됩니다."))
                     }
                 }
             }
-            .myLogBackground()
+            .journalBackground()
             .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $isPresentingNewForm) {
-                MyLogFormView()
+                JournalFormView()
             }
-            .sheet(item: $editingMyLog) { myLog in
-                MyLogFormView(myLog: myLog)
+            .sheet(item: $editingJournal) { journal in
+                JournalFormView(journal: journal)
             }
         }
     }
 
-    /// 큰 제목과 새 마이로그 버튼
+    /// 큰 제목과 새 저널 버튼
     private var header: some View {
         HStack {
-            Text("마이로그")
+            Text("저널")
                 .font(.system(size: 30, weight: .heavy, design: .rounded))
-                .foregroundStyle(MyLogTheme.text)
+                .foregroundStyle(JournalTheme.text)
             Spacer()
             Button {
                 toggleSearch()
             } label: {
                 Image(systemName: isSearching ? "xmark" : "magnifyingglass")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(MyLogTheme.accent)
+                    .foregroundStyle(JournalTheme.accent)
                     .frame(width: 36, height: 36)
-                    .background(MyLogTheme.glassFill, in: Circle())
-                    .overlay { Circle().strokeBorder(MyLogTheme.glassBorder, lineWidth: 1) }
+                    .background(JournalTheme.glassFill, in: Circle())
+                    .overlay { Circle().strokeBorder(JournalTheme.glassBorder, lineWidth: 1) }
             }
             .accessibilityLabel(isSearching ? "검색 닫기" : "검색")
             Button {
@@ -106,9 +106,9 @@ struct MyLogListView: View {
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
-                    .background(MyLogTheme.accent, in: Circle())
+                    .background(JournalTheme.accent, in: Circle())
             }
-            .accessibilityLabel("새 마이로그")
+            .accessibilityLabel("새 저널")
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -119,7 +119,7 @@ struct MyLogListView: View {
     private var searchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(MyLogTheme.subText)
+                .foregroundStyle(JournalTheme.subText)
             TextField("제목, 본문, 카테고리, 태그 검색", text: $searchText)
                 .focused($isSearchFieldFocused)
                 .submitLabel(.search)
@@ -130,7 +130,7 @@ struct MyLogListView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(MyLogTheme.subText)
+                        .foregroundStyle(JournalTheme.subText)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("검색어 지우기")
@@ -155,7 +155,7 @@ struct MyLogListView: View {
 
     private func delete(at offsets: IndexSet) {
         // offsets는 필터링된 배열 기준이므로, 같은 배열에서 대상을 찾아 삭제합니다.
-        let targets = offsets.map { filteredMyLogs[$0] }
+        let targets = offsets.map { filteredJournals[$0] }
         targets.forEach(modelContext.delete)
     }
 }
@@ -169,37 +169,37 @@ private extension View {
     }
 }
 
-private struct MyLogRow: View {
-    let myLog: JournalDatabase
+private struct JournalRow: View {
+    let journal: JournalDatabase
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(myLog.title)
+                Text(journal.title)
                     .font(.headline)
-                    .foregroundStyle(MyLogTheme.text)
+                    .foregroundStyle(JournalTheme.text)
                 Spacer()
-                Text(myLog.category)
+                Text(journal.category)
                     .font(.caption)
-                    .foregroundStyle(MyLogTheme.badgeText)
+                    .foregroundStyle(JournalTheme.badgeText)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(MyLogTheme.accent.opacity(0.15), in: Capsule())
+                    .background(JournalTheme.accent.opacity(0.15), in: Capsule())
             }
-            if !myLog.content.isEmpty {
-                Text(myLog.content)
+            if !journal.content.isEmpty {
+                Text(journal.content)
                     .font(.subheadline)
-                    .foregroundStyle(MyLogTheme.subText)
+                    .foregroundStyle(JournalTheme.subText)
                     .lineLimit(2)
             }
-            if !myLog.tags.isEmpty {
-                Text(myLog.tags.map { "#\($0)" }.joined(separator: " "))
+            if !journal.tags.isEmpty {
+                Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
                     .font(.caption)
-                    .foregroundStyle(MyLogTheme.accent)
+                    .foregroundStyle(JournalTheme.accent)
             }
-            Text(myLog.createdAt, format: .dateTime.year().month().day())
+            Text(journal.createdAt, format: .dateTime.year().month().day())
                 .font(.caption2)
-                .foregroundStyle(MyLogTheme.subText)
+                .foregroundStyle(JournalTheme.subText)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -209,6 +209,6 @@ private struct MyLogRow: View {
 }
 
 #Preview {
-    MyLogListView()
+    JournalListView()
         .modelContainer(for: JournalDatabase.self, inMemory: true)
 }

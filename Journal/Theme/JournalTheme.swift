@@ -23,7 +23,7 @@ extension Color {
 }
 
 /// 글래스 그라데이션 디자인 값 (시안 G). 모든 색은 라이트와 다크 모드를 함께 정의합니다.
-enum MyLogTheme {
+enum JournalTheme {
     static let text = Color(light: Color(hex: 0x2D2347), dark: Color(hex: 0xF1EBFF))
     static let subText = Color(light: Color(hex: 0x6F6590), dark: Color(hex: 0xB2A8D0))
     static let accent = Color(light: Color(hex: 0x7C4DFF), dark: Color(hex: 0x8F69FF))
@@ -49,8 +49,8 @@ enum MyLogTheme {
 
 extension View {
     /// 화면 전체에 그라데이션 배경을 깝니다.
-    func myLogBackground() -> some View {
-        background { MyLogTheme.background.ignoresSafeArea() }
+    func journalBackground() -> some View {
+        background { JournalTheme.background.ignoresSafeArea() }
     }
 
     /// 반투명 유리 느낌의 카드 배경
@@ -67,9 +67,9 @@ private struct GlassCard: ViewModifier {
         content
             .background {
                 shape.fill(.ultraThinMaterial)
-                shape.fill(MyLogTheme.glassTint)
+                shape.fill(JournalTheme.glassTint)
             }
-            .overlay { shape.strokeBorder(MyLogTheme.glassBorder, lineWidth: 1) }
-            .shadow(color: MyLogTheme.glassShadow, radius: 12, y: 8)
+            .overlay { shape.strokeBorder(JournalTheme.glassBorder, lineWidth: 1) }
+            .shadow(color: JournalTheme.glassShadow, radius: 12, y: 8)
     }
 }

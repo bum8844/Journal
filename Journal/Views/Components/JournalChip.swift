@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 분류 선택 UI와 필터 UI가 함께 쓰는 알약형 칩 버튼
-struct MyLogChip: View {
+struct JournalChip: View {
     let title: String
     var isSelected = false
     /// 글자 뒤에 붙일 SF Symbol 이름. 선택된 태그의 삭제 표시 등에 씁니다.
@@ -17,12 +17,12 @@ struct MyLogChip: View {
                 }
             }
             .font(.footnote.weight(isSelected ? .semibold : .regular))
-            .foregroundStyle(isSelected ? Color.white : MyLogTheme.chipText)
+            .foregroundStyle(isSelected ? Color.white : JournalTheme.chipText)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? MyLogTheme.accent : MyLogTheme.glassFill, in: Capsule())
+            .background(isSelected ? JournalTheme.accent : JournalTheme.glassFill, in: Capsule())
             .overlay {
-                Capsule().strokeBorder(isSelected ? Color.clear : MyLogTheme.glassBorder, lineWidth: 1)
+                Capsule().strokeBorder(isSelected ? Color.clear : JournalTheme.glassBorder, lineWidth: 1)
             }
         }
         // 목록·폼 행 안에서도 칩마다 따로 눌리도록 합니다.
