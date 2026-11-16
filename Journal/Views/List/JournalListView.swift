@@ -59,10 +59,6 @@ struct JournalListView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     header
-                    JournalSearchBar(text: $searchText, isFocused: $isSearchFocused)
-                        .padding(.horizontal, 20)
-                    categoryChips
-                    tagChips
                     cardList
                 }
                 .padding(.top, 8)
@@ -154,6 +150,15 @@ struct JournalListView: View {
 
     private var cardList: some View {
         List {
+            // 칩은 목록의 첫 줄이라, 아래로 스크롤하면 위로 밀려 올라가 사라진다
+            VStack(alignment: .leading, spacing: 14) {
+                categoryChips
+                tagChips
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 7, trailing: 0))
+
             ForEach(filteredJournals) { journal in
                 Button {
                     selectedJournal = journal
@@ -177,6 +182,12 @@ struct JournalListView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.interactively)
+        // 검색창은 위에 고정된다. 스크롤하면 목록이 검색창 뒤로 지나가며 비쳐 보인다
+        .safeAreaInset(edge: .top, spacing: 0) {
+            JournalSearchBar(text: $searchText, isFocused: $isSearchFocused)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 6)
+        }
     }
 }
 
