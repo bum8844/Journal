@@ -1,5 +1,5 @@
 //
-//  JorunalDatabase.swift
+//  JournalDatabase.swift
 //  Journal
 //
 //  Created by IOS EST on 11/16/26.
@@ -10,7 +10,7 @@ import SwiftData
 
 @Model
 
-final class JorunalDatabase: Identifiable {
+final class JournalDatabase: Identifiable {
     var id = UUID()
     var title: String
     var content: String
