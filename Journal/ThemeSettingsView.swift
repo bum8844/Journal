@@ -25,9 +25,14 @@ enum AppTheme: String, CaseIterable {
     }
 }
 
-/// 테마 선택 화면입니다. 선택한 값의 저장과 앱 전체 적용은 JournalApp에서 처리합니다.
+/// 하단 설정 탭에서 화면 테마, 글자 크기와 화면 밝기를 바꿉니다.
 struct ThemeSettingsView: View {
     @Binding var theme: AppTheme
+    @AppStorage(DisplaySettings.textSizeKey) private var textSize: AppTextSize = .system
+#if os(iOS)
+    @AppStorage(DisplaySettings.usesCustomBrightnessKey) private var usesCustomBrightness = false
+    @AppStorage(DisplaySettings.brightnessKey) private var brightness = DisplaySettings.initialBrightness
+#endif
 
     var body: some View {
         Form {
@@ -39,6 +44,33 @@ struct ThemeSettingsView: View {
                     }
                 }
             }
+
+            Section("글자 크기") {
+                Picker("글자 크기", selection: $textSize) {
+                    ForEach(AppTextSize.allCases, id: \.self) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+            }
+
+#if os(iOS)
+            Section("화면 밝기") {
+                Picker("밝기 방식", selection: $usesCustomBrightness) {
+                    Text("기기 밝기 사용").tag(false)
+                    Text("직접 조절").tag(true)
+                }
+
+                if usesCustomBrightness {
+                    LabeledContent("밝기") {
+                        Text(brightness, format: .percent.precision(.fractionLength(0)))
+                    }
+                    Slider(value: $brightness, in: 0...1, step: 0.05) {
+                        Text("화면 밝기")
+                    }
+                    .accessibilityValue(brightness.formatted(.percent.precision(.fractionLength(0))))
+                }
+            }
+#endif
         }
         .navigationTitle("설정")
     }
