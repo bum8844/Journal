@@ -6,17 +6,19 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
     var body: some View {
-        JournalListView()
-            .tint(JournalTheme.accent)
-            .fontDesign(.rounded)
+        VStack {
+            Image(systemName: "globe")
+                .imageScale(.large)
+                .foregroundStyle(.tint)
+            Text("Hello, world!")
+        }
+        .padding()
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: JournalDatabase.self, inMemory: true)
 }

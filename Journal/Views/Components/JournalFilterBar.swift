@@ -54,10 +54,23 @@ struct JournalFilterBar: View {
                 } label: {
                     Label("필터 해제", systemImage: "xmark.circle")
                         .font(.footnote)
-                        .foregroundStyle(JournalTheme.subText)
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
             }
         }
     }
+}
+
+#Preview {
+    @Previewable @State var category: String? = "업무"
+    @Previewable @State var tags: Set<String> = ["swift"]
+
+    JournalFilterBar(
+        selectedCategory: $category,
+        selectedTags: $tags,
+        categories: ["공부", "업무", "운동"],
+        tags: ["swift", "독서", "러닝"]
+    )
+    .padding()
 }

@@ -33,7 +33,6 @@ struct JournalClassificationPicker: View {
                 }
             }
         }
-        .listRowBackground(JournalTheme.glassFill)
 
         Section("태그") {
             if !tags.isEmpty {
@@ -67,11 +66,26 @@ struct JournalClassificationPicker: View {
                 }
             }
         }
-        .listRowBackground(JournalTheme.glassFill)
     }
 
     private func commitTagInput() {
         tags = JournalDatabase.tags(tags, adding: tagInput)
         tagInput = ""
+    }
+}
+
+#Preview {
+    @Previewable @State var category = "업무"
+    @Previewable @State var tags = ["swift"]
+    @Previewable @State var tagInput = ""
+
+    Form {
+        JournalClassificationPicker(
+            category: $category,
+            tags: $tags,
+            tagInput: $tagInput,
+            categorySuggestions: ["공부", "업무", "운동"],
+            tagSuggestions: ["swift", "독서", "러닝"]
+        )
     }
 }

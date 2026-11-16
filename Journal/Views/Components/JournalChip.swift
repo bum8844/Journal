@@ -17,13 +17,10 @@ struct JournalChip: View {
                 }
             }
             .font(.footnote.weight(isSelected ? .semibold : .regular))
-            .foregroundStyle(isSelected ? Color.white : JournalTheme.chipText)
+            .foregroundStyle(isSelected ? Color.white : Color.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(isSelected ? JournalTheme.accent : JournalTheme.glassFill, in: Capsule())
-            .overlay {
-                Capsule().strokeBorder(isSelected ? Color.clear : JournalTheme.glassBorder, lineWidth: 1)
-            }
+            .background(isSelected ? Color.accentColor : Color(uiColor: .secondarySystemFill), in: Capsule())
         }
         // 목록·폼 행 안에서도 칩마다 따로 눌리도록 합니다.
         .buttonStyle(.plain)
