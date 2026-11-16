@@ -1,46 +1,26 @@
 import SwiftUI
 
-extension Color {
-    /// 0xRRGGBB 형식의 정수로 색을 만듭니다.
-    init(hex: UInt32, opacity: Double = 1) {
-        self.init(
-            .sRGB,
-            red: Double((hex >> 16) & 0xFF) / 255,
-            green: Double((hex >> 8) & 0xFF) / 255,
-            blue: Double(hex & 0xFF) / 255,
-            opacity: opacity
-        )
-    }
-}
-
-extension Color {
-    /// 라이트 모드와 다크 모드에서 각각 다른 색을 쓰는 동적 색상
-    init(light: Color, dark: Color) {
-        self.init(uiColor: UIColor { traits in
-            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
-        })
-    }
-}
-
-/// 글래스 그라데이션 디자인 값 (시안 G). 모든 색은 라이트와 다크 모드를 함께 정의합니다.
+/// 글래스 그라데이션 디자인 값 (시안 G).
+/// 색상은 Assets.xcassets의 색상 세트에 라이트/다크 값이 함께 정의되어 있습니다.
+/// 값을 바꾸려면 코드가 아니라 에셋의 색상 세트를 수정하세요.
 enum JournalTheme {
-    static let text = Color(light: Color(hex: 0x2D2347), dark: Color(hex: 0xF1EBFF))
-    static let subText = Color(light: Color(hex: 0x6F6590), dark: Color(hex: 0xB2A8D0))
-    static let accent = Color(light: Color(hex: 0x7C4DFF), dark: Color(hex: 0x8F69FF))
-    static let chipText = Color(light: Color(hex: 0x4A3D73), dark: Color(hex: 0xD6CCF5))
-    static let badgeText = Color(light: Color(hex: 0x5A2FD6), dark: Color(hex: 0xCDBBFF))
+    static let text = Color("ThemeText")
+    static let subText = Color("ThemeSubText")
+    static let accent = Color("AccentColor")
+    static let chipText = Color("ThemeChipText")
+    static let badgeText = Color("ThemeBadgeText")
 
-    static let glassFill = Color(light: Color.white.opacity(0.55), dark: Color.white.opacity(0.10))
-    static let glassTint = Color(light: Color.white.opacity(0.4), dark: Color.white.opacity(0.05))
-    static let glassBorder = Color(light: Color.white.opacity(0.8), dark: Color.white.opacity(0.18))
-    static let glassShadow = Color(light: Color(hex: 0x7C4DFF, opacity: 0.15), dark: Color.black.opacity(0.35))
+    static let glassFill = Color("ThemeGlassFill")
+    static let glassTint = Color("ThemeGlassTint")
+    static let glassBorder = Color("ThemeGlassBorder")
+    static let glassShadow = Color("ThemeGlassShadow")
 
     /// 라이트: 라벤더 → 핑크 → 피치. 다크: 짙은 남보라 → 자주 → 와인
     static let background = LinearGradient(
         gradient: Gradient(stops: [
-            .init(color: Color(light: Color(hex: 0xE8D9FF), dark: Color(hex: 0x1A1433)), location: 0),
-            .init(color: Color(light: Color(hex: 0xFFD9EC), dark: Color(hex: 0x2C1A45)), location: 0.55),
-            .init(color: Color(light: Color(hex: 0xFFE9D6), dark: Color(hex: 0x3A2036)), location: 1)
+            .init(color: Color("ThemeBackgroundTop"), location: 0),
+            .init(color: Color("ThemeBackgroundMiddle"), location: 0.55),
+            .init(color: Color("ThemeBackgroundBottom"), location: 1)
         ]),
         startPoint: UnitPoint(x: 0.3, y: 0),
         endPoint: UnitPoint(x: 0.7, y: 1)
