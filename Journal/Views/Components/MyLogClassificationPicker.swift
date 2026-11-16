@@ -33,19 +33,16 @@ struct MyLogClassificationPicker: View {
                 }
             }
         }
+        .listRowBackground(MyLogTheme.glassFill)
 
         Section("태그") {
             if !tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
                         ForEach(tags, id: \.self) { tag in
-                            Button {
+                            MyLogChip(title: "#\(tag)", isSelected: true, trailingSystemImage: "xmark") {
                                 tags.removeAll { $0 == tag }
-                            } label: {
-                                Label(tag, systemImage: "xmark.circle.fill")
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
                         }
                     }
                 }
@@ -56,7 +53,7 @@ struct MyLogClassificationPicker: View {
                     .textInputAutocapitalization(.never)
                     .submitLabel(.done)
                     .onSubmit(commitTagInput)
-                Button("추가", action: commitTagInput)
+                MyLogChip(title: "추가", isSelected: MyLog.normalizedTag(tagInput) != nil, action: commitTagInput)
                     .disabled(MyLog.normalizedTag(tagInput) == nil)
             }
 
@@ -70,6 +67,7 @@ struct MyLogClassificationPicker: View {
                 }
             }
         }
+        .listRowBackground(MyLogTheme.glassFill)
     }
 
     private func commitTagInput() {

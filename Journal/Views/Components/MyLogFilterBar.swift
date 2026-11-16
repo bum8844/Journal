@@ -48,13 +48,16 @@ struct MyLogFilterBar: View {
             }
 
             if isFiltering {
-                Button("필터 해제", systemImage: "xmark.circle") {
+                Button {
                     selectedCategory = nil
                     selectedTags.removeAll()
+                } label: {
+                    Label("필터 해제", systemImage: "xmark.circle")
+                        .font(.footnote)
+                        .foregroundStyle(MyLogTheme.subText)
                 }
-                .font(.footnote)
+                .buttonStyle(.plain)
             }
         }
-        .padding(.vertical, 4)
     }
 }

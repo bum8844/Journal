@@ -1,16 +1,31 @@
 import SwiftUI
 
-/// 분류 선택 UI와 필터 UI가 함께 쓰는 칩 버튼
+/// 분류 선택 UI와 필터 UI가 함께 쓰는 알약형 칩 버튼
 struct MyLogChip: View {
     let title: String
     var isSelected = false
+    /// 글자 뒤에 붙일 SF Symbol 이름. 선택된 태그의 삭제 표시 등에 씁니다.
+    var trailingSystemImage: String?
     let action: () -> Void
 
     var body: some View {
-        Button(title, action: action)
-            .buttonStyle(.borderedProminent)
-            .tint(isSelected ? .accentColor : .gray.opacity(0.3))
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-            .controlSize(.small)
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text(title)
+                if let trailingSystemImage {
+                    Image(systemName: trailingSystemImage).font(.caption2.weight(.bold))
+                }
+            }
+            .font(.footnote.weight(isSelected ? .semibold : .regular))
+            .foregroundStyle(isSelected ? Color.white : MyLogTheme.chipText)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(isSelected ? MyLogTheme.accent : MyLogTheme.glassFill, in: Capsule())
+            .overlay {
+                Capsule().strokeBorder(isSelected ? Color.clear : MyLogTheme.glassBorder, lineWidth: 1)
+            }
+        }
+        // 목록·폼 행 안에서도 칩마다 따로 눌리도록 합니다.
+        .buttonStyle(.plain)
     }
 }

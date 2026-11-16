@@ -46,11 +46,14 @@ struct MyLogFormView: View {
                 Section("제목") {
                     TextField("제목", text: $title)
                 }
+                .listRowBackground(MyLogTheme.glassFill)
 
                 Section("본문") {
                     TextEditor(text: $content)
+                        .scrollContentBackground(.hidden)
                         .frame(minHeight: 160)
                 }
+                .listRowBackground(MyLogTheme.glassFill)
 
                 MyLogClassificationPicker(
                     category: $category,
@@ -60,6 +63,8 @@ struct MyLogFormView: View {
                     tagSuggestions: existingTags
                 )
             }
+            .scrollContentBackground(.hidden)
+            .myLogBackground()
             .navigationTitle(myLog == nil ? "새 마이로그" : "마이로그 편집")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
