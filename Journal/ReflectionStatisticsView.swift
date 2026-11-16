@@ -54,6 +54,7 @@ struct ReflectionStatisticsView: View {
                     .buttonStyle(.borderless)
                 }
             }
+            .listRowBackground(JournalTheme.glassFill)
 
             if let interval = selectedInterval {
                 // 주·월간 화면 모두 같은 집계 코드에 선택한 기간과 작성일·태그를 넘깁니다.
@@ -65,19 +66,26 @@ struct ReflectionStatisticsView: View {
                 Section("회고 건수") {
                     Text("\(statistics.reflectionCount)건")
                 }
+                .listRowBackground(JournalTheme.glassFill)
 
                 Section("자주 쓴 태그") {
                     if statistics.tagCounts.isEmpty {
                         Text("이 기간에 등록된 태그가 없어요.")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(JournalTheme.subText)
                     }
 
                     ForEach(statistics.tagCounts) { item in
                         LabeledContent(item.tag, value: "\(item.count)건")
                     }
                 }
+                .listRowBackground(JournalTheme.glassFill)
             }
         }
+        // 팀 공통 테마: 시스템 목록 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
+        .scrollContentBackground(.hidden)
+        .journalBackground()
+        .foregroundStyle(JournalTheme.text)
+        .tint(JournalTheme.accent)
         .navigationTitle("통계")
         .onChange(of: period) {
             // 기간 단위를 바꾸면 이번 주 또는 이번 달부터 보여줍니다.

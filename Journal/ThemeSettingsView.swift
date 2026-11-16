@@ -44,6 +44,7 @@ struct ThemeSettingsView: View {
                     }
                 }
             }
+            .listRowBackground(JournalTheme.glassFill)
 
             Section("글자 크기") {
                 Picker("글자 크기", selection: $textSize) {
@@ -52,6 +53,7 @@ struct ThemeSettingsView: View {
                     }
                 }
             }
+            .listRowBackground(JournalTheme.glassFill)
 
 #if os(iOS)
             Section("화면 밝기") {
@@ -70,8 +72,14 @@ struct ThemeSettingsView: View {
                     .accessibilityValue(brightness.formatted(.percent.precision(.fractionLength(0))))
                 }
             }
+            .listRowBackground(JournalTheme.glassFill)
 #endif
         }
+        // 팀 공통 테마: 시스템 폼 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
+        .scrollContentBackground(.hidden)
+        .journalBackground()
+        .foregroundStyle(JournalTheme.text)
+        .tint(JournalTheme.accent)
         .navigationTitle("설정")
     }
 }
