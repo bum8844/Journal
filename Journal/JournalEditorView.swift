@@ -31,7 +31,8 @@ struct JournalEditorView: View {
     }
     
     var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
     
     // 배치 확인용 임시 값. 분류 선택 UI는 C 담당이므로 완성되면 교체한다.
