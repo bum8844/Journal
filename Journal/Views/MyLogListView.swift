@@ -9,11 +9,14 @@ struct MyLogListView: View {
     @State private var selectedCategory: String?
     @State private var selectedTags: Set<String> = []
     @State private var isPresentingNewForm = false
+    @State private var isSearching = false
+    @State private var searchText = ""
+    @FocusState private var isSearchFieldFocused: Bool
     @State private var editingMyLog: MyLog?
 
     /// 필터를 적용한 목록. 필터가 없으면 전체입니다.
     private var filteredMyLogs: [MyLog] {
-        MyLog.filter(myLogs, category: selectedCategory, tags: selectedTags)
+        MyLog.filter(myLogs, category: selectedCategory, tags: selectedTags, query: searchText)
     }
 
     private var availableCategories: [String] {
@@ -28,6 +31,10 @@ struct MyLogListView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 header
+
+                if isSearching {
+                    searchField
+                }
 
                 List {
                     if !myLogs.isEmpty {
@@ -59,7 +66,7 @@ struct MyLogListView: View {
                                                description: Text("오른쪽 위 + 버튼으로 첫 마이로그를 작성해 보세요."))
                     } else if filteredMyLogs.isEmpty {
                         ContentUnavailableView("조건에 맞는 마이로그가 없습니다", systemImage: "line.3.horizontal.decrease.circle",
-                                               description: Text("필터를 해제하면 전체 목록이 표시됩니다."))
+                                               description: Text("검색어나 필터를 해제하면 전체 목록이 표시됩니다."))
                     }
                 }
             }
@@ -82,6 +89,17 @@ struct MyLogListView: View {
                 .foregroundStyle(MyLogTheme.text)
             Spacer()
             Button {
+                toggleSearch()
+            } label: {
+                Image(systemName: isSearching ? "xmark" : "magnifyingglass")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(MyLogTheme.accent)
+                    .frame(width: 36, height: 36)
+                    .background(MyLogTheme.glassFill, in: Circle())
+                    .overlay { Circle().strokeBorder(MyLogTheme.glassBorder, lineWidth: 1) }
+            }
+            .accessibilityLabel(isSearching ? "검색 닫기" : "검색")
+            Button {
                 isPresentingNewForm = true
             } label: {
                 Image(systemName: "plus")
@@ -95,6 +113,44 @@ struct MyLogListView: View {
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 4)
+    }
+
+    /// 검색어를 입력하는 유리 질감의 입력창
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(MyLogTheme.subText)
+            TextField("제목, 본문, 카테고리, 태그 검색", text: $searchText)
+                .focused($isSearchFieldFocused)
+                .submitLabel(.search)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(MyLogTheme.subText)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("검색어 지우기")
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .glassCard(cornerRadius: 16)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 4)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    /// 검색창을 열고 닫습니다. 닫으면 검색어도 지워 전체 목록으로 돌아갑니다.
+    private func toggleSearch() {
+        withAnimation(.snappy) {
+            isSearching.toggle()
+            if !isSearching { searchText = "" }
+        }
+        isSearchFieldFocused = isSearching
     }
 
     private func delete(at offsets: IndexSet) {
