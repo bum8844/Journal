@@ -56,6 +56,35 @@ struct JournalDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .tint(JournalTheme.accent)
+        .toolbar {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                // 아직 동작은 연결하지 않았다 (수정 화면, 삭제는 이후에 연결)
+                Button {
+                    // TODO: 수정 화면으로 이동
+                } label: {
+                    Label("수정", systemImage: "pencil")
+                }
+                .buttonStyle(PressColorButtonStyle(pressed: .blue))
+
+                Button(role: .destructive) {
+                    // TODO: 삭제 후 목록으로 돌아가기
+                } label: {
+                    Label("삭제", systemImage: "trash")
+                }
+                .buttonStyle(PressColorButtonStyle(pressed: .red))
+            }
+        }
+    }
+}
+
+/// 평소에는 테마 보라색, 누르는 동안에는 지정한 색으로 바뀌는 버튼 스타일
+private struct PressColorButtonStyle: ButtonStyle {
+    let pressed: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(configuration.isPressed ? pressed : JournalTheme.accent)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

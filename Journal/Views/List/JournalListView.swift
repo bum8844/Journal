@@ -93,18 +93,21 @@ struct JournalListView: View {
 
             Spacer()
 
-            // 검색어를 지우고 키보드를 닫는다
-            Button {
-                searchText = ""
-                isSearchFocused = false
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(JournalTheme.accent)
-                    .frame(width: 52, height: 52)
-                    .glassCard(cornerRadius: 26)
+            // 검색창을 눌렀을 때만 나타난다. 검색어를 지우고 키보드를 닫는다
+            if isSearchFocused {
+                Button {
+                    searchText = ""
+                    isSearchFocused = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(JournalTheme.accent)
+                        .frame(width: 52, height: 52)
+                        .glassCard(cornerRadius: 26)
+                }
+                .accessibilityLabel("검색 닫기")
+                .transition(.scale.combined(with: .opacity))
             }
-            .accessibilityLabel("검색 닫기")
 
             Button(action: onAdd) {
                 Image(systemName: "plus")
@@ -116,6 +119,7 @@ struct JournalListView: View {
             .accessibilityLabel("새 회고 작성")
         }
         .padding(.horizontal, 20)
+        .animation(.easeInOut(duration: 0.2), value: isSearchFocused)
     }
 
     private var categoryChips: some View {
