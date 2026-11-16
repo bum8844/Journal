@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyLog 디자인 시안 4종</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    background: #e9e9ee; color: #222; padding: 40px 24px 80px;
+  }
+  header { max-width: 1100px; margin: 0 auto 32px; }
+  header h1 { font-size: 28px; }
+  header p { margin-top: 8px; color: #666; line-height: 1.6; }
+  nav { max-width: 1100px; margin: 0 auto 40px; display: flex; gap: 8px; flex-wrap: wrap; }
+  nav a { padding: 8px 14px; border-radius: 999px; background: #fff; color: #333; text-decoration: none; font-size: 14px; }
+  section.concept { max-width: 1100px; margin: 0 auto 72px; }
+  section.concept > h2 { font-size: 22px; }
+  section.concept > .desc { margin: 6px 0 12px; color: #555; line-height: 1.6; }
+  .swatches { display: flex; gap: 6px; margin-bottom: 24px; }
+  .swatches i { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(0,0,0,.1); display: block; }
+  .phones { display: flex; gap: 32px; flex-wrap: wrap; }
+
+  /* 아이폰 프레임 */
+  .phone {
+    width: 320px; height: 660px; border-radius: 44px; background: #111; padding: 10px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.25); flex: none;
+  }
+  .screen {
+    width: 100%; height: 100%; border-radius: 34px; overflow: hidden; position: relative;
+    background: var(--bg); color: var(--text); font-family: var(--font);
+    display: flex; flex-direction: column;
+  }
+  .status { display: flex; justify-content: space-between; padding: 14px 24px 6px; font-size: 13px; font-weight: 600; }
+  .body { padding: 8px 18px 18px; overflow: hidden; flex: 1; }
+
+  /* 목록 화면 */
+  .title-row { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 14px; }
+  .title-row h3 { font-size: var(--title-size); font-weight: var(--title-weight); letter-spacing: -.02em; }
+  .plus { width: 34px; height: 34px; border-radius: var(--btn-radius); background: var(--accent); color: var(--on-accent);
+          display: grid; place-items: center; font-size: 22px; line-height: 1; }
+  .filter { margin-bottom: 14px; }
+  .chips { display: flex; gap: 6px; margin-bottom: 8px; overflow: hidden; white-space: nowrap; }
+  .chip { padding: 5px 11px; font-size: 12.5px; border-radius: var(--chip-radius); background: var(--chip-bg); color: var(--chip-text); border: 1px solid var(--chip-border); }
+  .chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
+  .clear { font-size: 12px; color: var(--sub); }
+  .card { padding: 14px; margin-bottom: 10px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--card-border); box-shadow: var(--shadow); }
+  .card .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card h4 { font-size: 15.5px; font-weight: 700; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--badge-bg); color: var(--badge-text); flex: none; }
+  .card p { font-size: 13px; color: var(--sub); margin: 6px 0; line-height: 1.5; }
+  .card .tags { font-size: 12px; color: var(--accent); }
+  .card .date { font-size: 11px; color: var(--sub); margin-top: 4px; }
+  [data-layout="lines"] .card { background: transparent; border: 0; border-bottom: 1px solid var(--card-border); border-radius: 0; padding: 14px 0; box-shadow: none; }
+  [data-layout="bold"] .card { border-left: 5px solid var(--accent); }
+
+  /* 폼 화면 */
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 6px 18px 10px; font-size: 14px; }
+  .nav b { font-size: 15px; }
+  .nav .cancel { color: var(--sub); }
+  .nav .save { color: var(--accent); font-weight: 700; }
+  .field-label { font-size: 11.5px; font-weight: 600; color: var(--sub); margin: 12px 0 5px; text-transform: none; }
+  .input { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--card); border: 1px solid var(--card-border); font-size: 14px; }
+  .input.area { min-height: 92px; line-height: 1.5; color: var(--sub); }
+  .input .ph { color: var(--sub); opacity: .7; }
+  .row { display: flex; gap: 6px; align-items: center; }
+  .row .input { flex: 1; }
+  .add { padding: 8px 12px; border-radius: var(--chip-radius); background: var(--accent); color: var(--on-accent); font-size: 12.5px; font-weight: 600; }
+  .chips.wrap { flex-wrap: wrap; white-space: normal; margin-top: 8px; }
+  .chip .x { opacity: .6; margin-left: 4px; }
+
+  .label { text-align: center; margin-top: 10px; font-size: 12px; color: #777; width: 320px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MyLog 디자인 시안 4종</h1>
+  <p>카테고리 선택, 태그 입력, 목록 필터가 들어가는 두 화면(목록, 작성 폼)을 시안별로 보여줍니다.<br>
+     목록 화면은 "업무" 카테고리를 선택해 필터가 적용된 상태입니다. 색상과 글꼴은 SwiftUI의 <code>Color</code>, <code>Font</code>로 옮길 수 있는 값입니다.</p>
+</header>
+
+<nav>
+  <a href="#a">A. 페이퍼</a>
+  <a href="#b">B. 미드나잇</a>
+  <a href="#c">C. 민트 소프트</a>
+  <a href="#d">D. 선셋 볼드</a>
+</nav>
+
+<main id="root"></main>
+
+<script>
+// 시안별 디자인 값. CSS 변수로 주입합니다.
+const themes = [
+  {
+    id: "a", layout: "lines",
+    name: "A. 페이퍼 (Paper)",
+    desc: "종이 노트 느낌의 미니멀 디자인. 따뜻한 아이보리 배경에 세리프 제목, 구분선만 쓰는 목록. 차분하게 글쓰기에 집중하는 앱에 어울립니다.",
+    colors: ["#faf6ee", "#2b2622", "#8a7f73", "#b5502e", "#ece4d4"],
+    v: {
+      "--bg": "#faf6ee", "--text": "#2b2622", "--sub": "#8a7f73", "--accent": "#b5502e", "--on-accent": "#fff",
+      "--card": "#fffdf8", "--card-border": "#e6dccb", "--shadow": "none",
+      "--chip-bg": "transparent", "--chip-text": "#5a5047", "--chip-border": "#d9cdb8", "--chip-radius": "4px",
+      "--badge-bg": "#f0e3d0", "--badge-text": "#8a4a2a",
+      "--radius": "0px", "--radius-sm": "4px", "--btn-radius": "4px",
+      "--font": "'New York', 'Iowan Old Style', Georgia, 'Apple SD Gothic Neo', serif",
+      "--title-size": "30px", "--title-weight": "700"
+    }
+  },
+  {
+    id: "b", layout: "card",
+    name: "B. 미드나잇 (Midnight)",
+    desc: "다크 모드 기반의 차분한 남색 톤. 밤에 하루를 돌아보는 용도에 맞는 낮은 채도의 보라 포인트 색을 씁니다.",
+    colors: ["#12141f", "#e8e9f3", "#8d92ad", "#8b7cf6", "#1e2133"],
+    v: {
+      "--bg": "#12141f", "--text": "#e8e9f3", "--sub": "#8d92ad", "--accent": "#8b7cf6", "--on-accent": "#fff",
+      "--card": "#1c1f30", "--card-border": "#2a2e45", "--shadow": "0 4px 14px rgba(0,0,0,.35)",
+      "--chip-bg": "#1c1f30", "--chip-text": "#b7bbd4", "--chip-border": "#2a2e45", "--chip-radius": "999px",
+      "--badge-bg": "rgba(139,124,246,.18)", "--badge-text": "#b9b0ff",
+      "--radius": "16px", "--radius-sm": "12px", "--btn-radius": "50%",
+      "--font": "-apple-system, 'SF Pro Text', 'Apple SD Gothic Neo', sans-serif",
+      "--title-size": "28px", "--title-weight": "700"
+    }
+  },
+  {
+    id: "c", layout: "card",
+    name: "C. 민트 소프트 (Mint Soft)",
+    desc: "둥근 모서리와 연한 민트 톤으로 가볍고 친근한 느낌. 매일 부담 없이 기록하는 습관형 앱에 어울립니다.",
+    colors: ["#f1f8f6", "#1f3a37", "#6f8f8a", "#2bb39a", "#ffffff"],
+    v: {
+      "--bg": "#f1f8f6", "--text": "#1f3a37", "--sub": "#6f8f8a", "--accent": "#2bb39a", "--on-accent": "#fff",
+      "--card": "#ffffff", "--card-border": "#e0efeb", "--shadow": "0 6px 16px rgba(43,179,154,.12)",
+      "--chip-bg": "#ffffff", "--chip-text": "#3d6660", "--chip-border": "#d3e8e3", "--chip-radius": "999px",
+      "--badge-bg": "#e3f5f1", "--badge-text": "#1b8a76",
+      "--radius": "22px", "--radius-sm": "16px", "--btn-radius": "50%",
+      "--font": "-apple-system, 'SF Pro Rounded', 'Apple SD Gothic Neo', sans-serif",
+      "--title-size": "28px", "--title-weight": "800"
+    }
+  },
+  {
+    id: "d", layout: "bold",
+    name: "D. 선셋 볼드 (Sunset Bold)",
+    desc: "큰 제목과 굵은 색 띠로 카테고리를 강조하는 에너지 있는 디자인. 주황 포인트가 눈에 띄고, 분류가 한눈에 구분됩니다.",
+    colors: ["#fff4ea", "#201a17", "#7d6b60", "#ff6a2b", "#ffffff"],
+    v: {
+      "--bg": "#fff4ea", "--text": "#201a17", "--sub": "#7d6b60", "--accent": "#ff6a2b", "--on-accent": "#fff",
+      "--card": "#ffffff", "--card-border": "#f3dfce", "--shadow": "0 3px 0 rgba(32,26,23,.08)",
+      "--chip-bg": "#ffffff", "--chip-text": "#201a17", "--chip-border": "#201a17", "--chip-radius": "8px",
+      "--badge-bg": "#201a17", "--badge-text": "#ffffff",
+      "--radius": "10px", "--radius-sm": "8px", "--btn-radius": "10px",
+      "--font": "-apple-system, 'SF Pro Display', 'Apple SD Gothic Neo', sans-serif",
+      "--title-size": "36px", "--title-weight": "900"
+    }
+  }
+];
+
+const logs = [
+  { title: "이번 주 개발 회고", body: "SwiftData 모델을 설계하고 필터 UI를 연결했다. 다음 주에는 통계 화면을 만든다.", cat: "업무", tags: ["swift", "회고"], date: "2026년 11월 16일" },
+  { title: "코드 리뷰에서 배운 점", body: "뷰에서 계산하는 로직은 모델로 옮기면 테스트하기 쉬워진다.", cat: "업무", tags: ["리뷰", "swift"], date: "2026년 11월 14일" }
+];
+const categories = ["업무", "공부", "운동", "관계"];
+const tags = ["swift", "회고", "리뷰", "독서"];
+
+const chip = (t, on, extra = "") => `<span class="chip ${on ? "on" : ""}">${t}${extra}</span>`;
+
+function listScreen() {
+  return `
+    <div class="status"><span>9:41</span><span>●●● 100%</span></div>
+    <div class="body">
+      <div class="title-row"><h3>마이로그</h3><div class="plus">+</div></div>
+      <div class="filter">
+        <div class="chips">${chip("전체", false)}${categories.map(c => chip(c, c === "업무")).join("")}</div>
+        <div class="chips">${tags.map(t => chip("#" + t, t === "swift")).join("")}</div>
+        <div class="clear">✕ 필터 해제</div>
+      </div>
+      ${logs.map(l => `
+        <div class="card">
+          <div class="top"><h4>${l.title}</h4><span class="badge">${l.cat}</span></div>
+          <p>${l.body}</p>
+          <div class="tags">${l.tags.map(t => "#" + t).join(" ")}</div>
+          <div class="date">${l.date}</div>
+        </div>`).join("")}
+    </div>`;
+}
+
+function formScreen() {
+  return `
+    <div class="status"><span>9:41</span><span>●●● 100%</span></div>
+    <div class="nav"><span class="cancel">취소</span><b>새 마이로그</b><span class="save">저장</span></div>
+    <div class="body" style="padding-top:0">
+      <div class="field-label">제목</div>
+      <div class="input">오늘의 마이로그</div>
+      <div class="field-label">본문</div>
+      <div class="input area">오늘 있었던 일과 느낀 점을 적어 보세요.</div>
+      <div class="field-label">카테고리</div>
+      <div class="input">업무<span class="ph"> | 직접 입력</span></div>
+      <div class="chips wrap">${["업무", "공부", "운동", "관계"].map(c => chip(c, c === "업무")).join("")}</div>
+      <div class="field-label">태그</div>
+      <div class="chips wrap" style="margin-top:0">${["swift", "회고"].map(t => chip("#" + t, true, '<span class="x">✕</span>')).join("")}</div>
+      <div class="row" style="margin-top:8px"><div class="input"><span class="ph">태그 입력</span></div><span class="add">추가</span></div>
+      <div class="chips wrap">${["리뷰", "독서"].map(t => chip("#" + t, false)).join("")}</div>
+    </div>`;
+}
+
+const root = document.getElementById("root");
+root.innerHTML = themes.map(t => {
+  const style = Object.entries(t.v).map(([k, v]) => `${k}:${v}`).join(";");
+  return `
+  <section class="concept" id="${t.id}">
+    <h2>${t.name}</h2>
+    <p class="desc">${t.desc}</p>
+    <div class="swatches">${t.colors.map(c => `<i style="background:${c}" title="${c}"></i>`).join("")}</div>
+    <div class="phones">
+      <div><div class="phone"><div class="screen" data-layout="${t.layout}" style="${style}">${listScreen()}</div></div><div class="label">목록 + 필터</div></div>
+      <div><div class="phone"><div class="screen" data-layout="${t.layout}" style="${style}">${formScreen()}</div></div><div class="label">작성 폼 + 분류 선택</div></div>
+    </div>
+  </section>`;
+}).join("");
+</script>
+</body>
+</html>
