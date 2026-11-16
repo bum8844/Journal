@@ -18,9 +18,10 @@ final class JorunalDatabase: Identifiable {
     var category: String
     var tags: [String]
     
-    init(title: String, content: String, tags: [String]) {
+    init(title: String, content: String, category: String, tags: [String]) {
         self.title = title
         self.content = content
+        self.category = category
         self.tags = tags
     }
 }
