@@ -38,8 +38,8 @@ struct JournalEditorView: View {
     @State private var tagInput: String = ""
     private let suggestedCategories = ["업무", "공부", "운동", "관계"]
     private let suggestedTags = ["리뷰", "독서"]
-    private let accent = Color(red: 0.46, green: 0.31, blue: 0.96)
-    private let labelColor = Color(red: 0.42, green: 0.40, blue: 0.52)
+    private let accent = JournalTheme.accent
+    private let labelColor = JournalTheme.subText
     
     // tags 문자열("swift, 회고")을 칩으로 보여주기 위한 배열
     private var tagList: [String] {
@@ -125,18 +125,8 @@ struct JournalEditorView: View {
             .padding(.bottom, 32)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.91, green: 0.87, blue: 0.99),
-                    Color(red: 0.97, green: 0.85, blue: 0.92),
-                    Color(red: 0.98, green: 0.91, blue: 0.85)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
+        .foregroundStyle(JournalTheme.text)
+        .journalBackground()
         .navigationTitle(journal == nil ? "새 마이로그" : "마이로그 수정")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
@@ -200,11 +190,11 @@ private extension JournalEditorView {
         Button(action: action) {
             Text(text)
                 .fontWeight(isSelected ? .bold : .regular)
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .foregroundStyle(isSelected ? Color.white : JournalTheme.chipText)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(isSelected ? accent : Color.white.opacity(0.6), in: Capsule())
-                .overlay(Capsule().stroke(Color.white.opacity(0.9), lineWidth: 1))
+                .background(isSelected ? accent : JournalTheme.glassFill, in: Capsule())
+                .overlay(Capsule().stroke(JournalTheme.glassBorder, lineWidth: 1))
         }
     }
     
@@ -242,8 +232,8 @@ private extension JournalEditorView {
 private extension View {
     func fieldBackground() -> some View {
         self
-            .background(Color.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.9), lineWidth: 1))
+            .background(JournalTheme.glassFill, in: RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(JournalTheme.glassBorder, lineWidth: 1))
     }
     
     func fieldStyle() -> some View {
@@ -310,7 +300,8 @@ private struct FlowLayout: Layout {
 // [디자인과 다른 점]
 // - 취소 버튼: 디자인에는 왼쪽 "취소"가 있지만, push 화면은 `< 뒤로` 버튼이 그 역할을 하므로 두지 않았다.
 //   디자인대로 "취소"를 쓰려면 push 대신 sheet 방식으로 바꿔야 한다.
-// - 색상: 이미지에서 눈대중으로 맞춘 값이다. 정확한 색상 코드가 정해지면 `accent`와 `LinearGradient`를 수정한다.
+// - 색상: 하드코딩하지 않고 JournalTheme(Assets.xcassets의 색상 세트)을 쓴다. 라이트/다크 모드가 자동으로 적용된다.
+//   색을 바꾸려면 이 파일이 아니라 에셋의 색상 세트를 수정한다.
 //
 // [기존 로직과의 관계]
 // - `save()`와 `init`은 수정하지 않았다.
