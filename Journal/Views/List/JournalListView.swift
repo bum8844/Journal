@@ -19,7 +19,7 @@ struct JournalListView: View {
 
     @State private var searchText = ""
     @State private var selectedCategory: String?
-    @State private var selectedTag: String?
+    @State private var selectedTags: Set<String> = []
     @State private var selectedJournal: JournalDatabase?
     // + 버튼을 누르면 새 회고 작성 화면으로 이동한다
     @State private var isAddingNew = false
@@ -28,7 +28,7 @@ struct JournalListView: View {
     // MARK: - 필터 후보 (목록에 있는 값에서 중복 없이 뽑는다)
 
     private var categories: [String] {
-        journals.map(\.category).uniqued()
+        journals.map(\.category).filter { !$0.isEmpty }.uniqued()
     }
 
     private var tags: [String] {
@@ -40,12 +40,12 @@ struct JournalListView: View {
     private var filteredJournals: [JournalDatabase] {
         let keyword = searchText.trimmingCharacters(in: .whitespaces)
 
-        return journals.filter { journal in
-            if let selectedCategory, journal.category != selectedCategory { return false }
-            if let selectedTag, !journal.tags.contains(selectedTag) { return false }
-            guard !keyword.isEmpty else { return true }
+        // 카테고리/태그 필터는 C의 규칙을 쓴다 (선택한 태그를 모두 가진 글만 남는다)
+        let filtered = JournalDatabase.filter(journals, category: selectedCategory, tags: selectedTags)
+        guard !keyword.isEmpty else { return filtered }
 
-            return journal.title.localizedCaseInsensitiveContains(keyword)
+        return filtered.filter { journal in
+            journal.title.localizedCaseInsensitiveContains(keyword)
                 || journal.content.localizedCaseInsensitiveContains(keyword)
                 || journal.category.localizedCaseInsensitiveContains(keyword)
                 || journal.tags.contains { $0.localizedCaseInsensitiveContains(keyword) }
@@ -79,9 +79,7 @@ struct JournalListView: View {
                 }
             }
             .onChange(of: tags) {
-                if let selectedTag, !tags.contains(selectedTag) {
-                    self.selectedTag = nil
-                }
+                selectedTags.formIntersection(tags)
             }
         }
     }
@@ -126,43 +124,16 @@ struct JournalListView: View {
         .animation(.easeInOut(duration: 0.2), value: isSearchFocused)
     }
 
-    private var categoryChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                FilterChipView(title: "전체", isSelected: selectedCategory == nil) {
-                    selectedCategory = nil
-                }
-                ForEach(categories, id: \.self) { category in
-                    FilterChipView(title: category, isSelected: selectedCategory == category) {
-                        selectedCategory = category
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-    }
-
-    private var tagChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(tags, id: \.self) { tag in
-                    FilterChipView(title: "#\(tag)", isSelected: selectedTag == tag) {
-                        // 같은 태그를 다시 누르면 해제
-                        selectedTag = (selectedTag == tag) ? nil : tag
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-    }
-
     private var cardList: some View {
         List {
-            // 칩은 목록의 첫 줄이라, 아래로 스크롤하면 위로 밀려 올라가 사라진다
-            VStack(alignment: .leading, spacing: 14) {
-                categoryChips
-                tagChips
-            }
+            // 필터는 목록의 첫 줄이라, 아래로 스크롤하면 위로 밀려 올라가 사라진다
+            JournalFilterBar(
+                selectedCategory: $selectedCategory,
+                selectedTags: $selectedTags,
+                categories: categories,
+                tags: tags,
+                horizontalInset: 20
+            )
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 7, trailing: 0))

@@ -8,16 +8,18 @@ struct JournalFilterBar: View {
 
     let categories: [String]
     let tags: [String]
+    /// 좌우 여백. 칩 줄은 화면 끝까지 스크롤되고, 첫 칩과 마지막 칩만 이 여백만큼 안쪽에서 시작/끝납니다.
+    var horizontalInset: CGFloat = 0
 
     private var isFiltering: Bool {
         selectedCategory != nil || !selectedTags.isEmpty
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 14) {
             if !categories.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                    HStack(spacing: 10) {
                         JournalChip(title: "전체", isSelected: selectedCategory == nil) {
                             selectedCategory = nil
                         }
@@ -28,12 +30,13 @@ struct JournalFilterBar: View {
                             }
                         }
                     }
+                    .padding(.horizontal, horizontalInset)
                 }
             }
 
             if !tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                    HStack(spacing: 10) {
                         ForEach(tags, id: \.self) { tag in
                             JournalChip(title: "#\(tag)", isSelected: selectedTags.contains(tag)) {
                                 if selectedTags.contains(tag) {
@@ -44,6 +47,7 @@ struct JournalFilterBar: View {
                             }
                         }
                     }
+                    .padding(.horizontal, horizontalInset)
                 }
             }
 
@@ -54,9 +58,10 @@ struct JournalFilterBar: View {
                 } label: {
                     Label("필터 해제", systemImage: "xmark.circle")
                         .font(.footnote)
-                        .foregroundStyle(Color.secondary)
+                        .foregroundStyle(JournalTheme.subText)
                 }
                 .buttonStyle(.plain)
+                .padding(.horizontal, horizontalInset)
             }
         }
     }
@@ -70,7 +75,9 @@ struct JournalFilterBar: View {
         selectedCategory: $category,
         selectedTags: $tags,
         categories: ["공부", "업무", "운동"],
-        tags: ["swift", "독서", "러닝"]
+        tags: ["swift", "독서", "러닝"],
+        horizontalInset: 20
     )
-    .padding()
+    .padding(.vertical)
+    .background(JournalTheme.background)
 }
