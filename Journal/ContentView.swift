@@ -12,15 +12,16 @@ import SwiftData
 struct ContentView: View {
     // JournalApp에 저장된 테마를 읽고, 설정 화면에서 바꾼 값을 같은 상태에 반영합니다.
     @Binding var theme: AppTheme
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         TabView {
-            NavigationStack {
-                // 팀 통합 시 B 담당의 회고 목록이 들어갈 자리입니다.
-                ContentUnavailableView("회고", systemImage: "list.bullet.rectangle")
-                    .navigationTitle("회고")
-            }
-            .tabItem { Label("회고", systemImage: "list.bullet.rectangle") }
+            // JournalListView 안에 NavigationStack이 있어 탭에서 다시 감싸지 않습니다.
+            JournalListView()
+#if DEBUG
+                .task { JournalDatabase.seedSamplesIfNeeded(in: modelContext) }
+#endif
+                .tabItem { Label("회고", systemImage: "list.bullet.rectangle") }
 
             NavigationStack {
                 ReflectionStatisticsView()
