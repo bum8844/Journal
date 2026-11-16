@@ -35,7 +35,7 @@ struct JournalCardView: View {
                     .lineLimit(1)
             }
 
-            Text(journal.createdAt.formatted(date: .abbreviated, time: .omitted))
+            Text(journal.createdAt.koreanDateString)
                 .font(.subheadline)
                 .foregroundStyle(JournalTheme.secondaryText)
         }

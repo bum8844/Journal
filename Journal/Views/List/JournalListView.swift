@@ -3,18 +3,24 @@
 //  Journal
 //
 //  마이로그 리스트 화면 (검색 + 카테고리/태그 필터 + 카드 목록)
-//  데이터베이스 연결 전이므로 journals를 바깥에서 받는다.
+//  SwiftData에서 회고 목록을 읽고, 스와이프 삭제도 저장소에서 지운다.
 //
 
 import SwiftUI
+import SwiftData
 
 struct JournalListView: View {
-    let journals: [JournalDatabase]
+    // 저장된 회고를 최신순으로 자동으로 읽어 온다 (저장/삭제되면 화면도 자동 갱신)
+    @Query(sort: \JournalDatabase.createdAt, order: .reverse)
+    private var journals: [JournalDatabase]
+    @Environment(\.modelContext) private var modelContext
+
     var onAdd: () -> Void = {}
 
     @State private var searchText = ""
     @State private var selectedCategory: String?
     @State private var selectedTag: String?
+    @State private var selectedJournal: JournalDatabase?
     @FocusState private var isSearchFocused: Bool
 
     // MARK: - 필터 후보 (목록에 있는 값에서 중복 없이 뽑는다)
@@ -47,18 +53,35 @@ struct JournalListView: View {
     // MARK: - 화면
 
     var body: some View {
-        ZStack {
-            JournalTheme.background.ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                JournalTheme.background.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
-                header
-                JournalSearchBar(text: $searchText, isFocused: $isSearchFocused)
-                    .padding(.horizontal, 20)
-                categoryChips
-                tagChips
-                cardList
+                VStack(alignment: .leading, spacing: 14) {
+                    header
+                    JournalSearchBar(text: $searchText, isFocused: $isSearchFocused)
+                        .padding(.horizontal, 20)
+                    categoryChips
+                    tagChips
+                    cardList
+                }
+                .padding(.top, 8)
             }
-            .padding(.top, 8)
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(item: $selectedJournal) { journal in
+                JournalDetailView(journal: journal)
+            }
+            // 삭제로 사라진 카테고리/태그가 선택된 채로 남지 않게 해제한다
+            .onChange(of: categories) {
+                if let selectedCategory, !categories.contains(selectedCategory) {
+                    self.selectedCategory = nil
+                }
+            }
+            .onChange(of: tags) {
+                if let selectedTag, !tags.contains(selectedTag) {
+                    self.selectedTag = nil
+                }
+            }
         }
     }
 
@@ -127,17 +150,42 @@ struct JournalListView: View {
     }
 
     private var cardList: some View {
-        ScrollView {
-            LazyVStack(spacing: 14) {
-                ForEach(filteredJournals) { journal in
+        List {
+            ForEach(filteredJournals) { journal in
+                Button {
+                    selectedJournal = journal
+                } label: {
                     JournalCardView(journal: journal)
                 }
+                .buttonStyle(.plain)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 7, leading: 20, bottom: 7, trailing: 20))
+                // 오른쪽에서 왼쪽으로 밀면 삭제 버튼이 나타난다 (끝까지 밀면 바로 삭제)
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        delete(journal)
+                    } label: {
+                        Label("삭제", systemImage: "trash")
+                    }
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 4)
-            .padding(.bottom, 24)
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.interactively)
+    }
+}
+
+// MARK: - 삭제
+
+private extension JournalListView {
+    /// 저장소에서 회고를 지우고 바로 저장한다 (앱을 다시 켜도 삭제된 상태 유지)
+    func delete(_ journal: JournalDatabase) {
+        withAnimation {
+            modelContext.delete(journal)
+            try? modelContext.save()
+        }
     }
 }
 
@@ -151,5 +199,11 @@ private extension Sequence where Element: Hashable {
 }
 
 #Preview("리스트") {
-    JournalListView(journals: JournalDatabase.samples)
+    // 메모리에만 잠깐 저장되는 컨테이너라, 프리뷰를 새로고침하면 샘플이 다시 채워진다
+    let container = try! ModelContainer(
+        for: JournalDatabase.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    JournalDatabase.samples.forEach { container.mainContext.insert($0) }
+    return JournalListView().modelContainer(container)
 }
