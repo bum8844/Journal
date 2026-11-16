@@ -23,7 +23,7 @@ struct ContentView: View {
             .tabItem { Label("회고", systemImage: "list.bullet.rectangle") }
 
             NavigationStack {
-                MonthlyStatisticsView()
+                ReflectionStatisticsView()
             }
             .tabItem { Label("통계", systemImage: "chart.bar") }
 
