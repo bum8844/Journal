@@ -9,6 +9,8 @@ import SwiftUI
 
 struct JournalDetailView: View {
     let journal: JournalDatabase
+    // 수정 버튼을 누르면 같은 회고를 편집 화면으로 연다
+    @State private var isEditing = false
 
     var body: some View {
         ZStack {
@@ -56,11 +58,14 @@ struct JournalDetailView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .tint(JournalTheme.accent)
+        .navigationDestination(isPresented: $isEditing) {
+            JournalEditorView(journal: journal)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                // 아직 동작은 연결하지 않았다 (수정 화면, 삭제는 이후에 연결)
+                // 삭제 버튼은 아직 연결하지 않았다
                 Button {
-                    // TODO: 수정 화면으로 이동
+                    isEditing = true
                 } label: {
                     Label("수정", systemImage: "pencil")
                 }

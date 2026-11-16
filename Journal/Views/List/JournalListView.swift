@@ -21,6 +21,8 @@ struct JournalListView: View {
     @State private var selectedCategory: String?
     @State private var selectedTag: String?
     @State private var selectedJournal: JournalDatabase?
+    // + 버튼을 누르면 새 회고 작성 화면으로 이동한다
+    @State private var isAddingNew = false
     @FocusState private var isSearchFocused: Bool
 
     // MARK: - 필터 후보 (목록에 있는 값에서 중복 없이 뽑는다)
@@ -67,6 +69,9 @@ struct JournalListView: View {
             .navigationDestination(item: $selectedJournal) { journal in
                 JournalDetailView(journal: journal)
             }
+            .navigationDestination(isPresented: $isAddingNew) {
+                JournalEditorView()
+            }
             // 삭제로 사라진 카테고리/태그가 선택된 채로 남지 않게 해제한다
             .onChange(of: categories) {
                 if let selectedCategory, !categories.contains(selectedCategory) {
@@ -105,7 +110,10 @@ struct JournalListView: View {
                 .transition(.scale.combined(with: .opacity))
             }
 
-            Button(action: onAdd) {
+            Button {
+                onAdd()
+                isAddingNew = true
+            } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
