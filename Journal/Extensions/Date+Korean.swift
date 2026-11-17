@@ -15,3 +15,13 @@ extension Date {
         )
     }
 }
+
+extension JournalDatabase {
+    /// 화면에 보여 줄 날짜. 기간 회고는 "2026년 11월 16일 ~ 2026년 11월 18일", 하루 회고는 작성일입니다.
+    var displayDateString: String {
+        if isPeriod, let startDate, let endDate {
+            return "\(startDate.koreanDateString) ~ \(endDate.koreanDateString)"
+        }
+        return createdAt.koreanDateString
+    }
+}

@@ -35,9 +35,21 @@ struct JournalCardView: View {
                     .lineLimit(1)
             }
 
-            Text(journal.createdAt.koreanDateString)
-                .font(.subheadline)
-                .foregroundStyle(JournalTheme.subText)
+            HStack {
+                Text(journal.displayDateString)
+                    .font(.subheadline)
+                    .foregroundStyle(JournalTheme.subText)
+
+                Spacer(minLength: 8)
+
+                // 사진이 있는 회고는 오른쪽에 사진 아이콘을 보여 줍니다.
+                if journal.photoData != nil {
+                    Image(systemName: "photo")
+                        .font(.subheadline)
+                        .foregroundStyle(JournalTheme.accent)
+                        .accessibilityLabel("사진 포함")
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
