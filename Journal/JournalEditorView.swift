@@ -46,7 +46,7 @@ struct JournalEditorView: View {
         if let journal {
             // 저장된 답변을 질문 순서에 맞춰 펼칩니다. 답이 없는 질문은 빈 칸입니다.
             let texts = savedFormat.questions.map { question in
-                journal.answers.first { $0.question == question.english }?.text ?? ""
+                journal.answers.first { $0.question == question.key }?.text ?? ""
             }
             _answersByFormat = State(initialValue: [savedFormat: texts])
         }
@@ -111,12 +111,12 @@ struct JournalEditorView: View {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && hasBody && isPeriodValid
     }
     
-    /// KPT·4L 답변을 목록·검색·상세가 그대로 읽을 수 있도록 content 한 덩어리로 만듭니다.
+    /// 질문 형식(오늘의 경험·내일을 위한 정리) 답변을 목록·검색·상세가 그대로 읽을 수 있도록 content 한 덩어리로 만듭니다.
     private var composedContent: String {
         zip(format.questions, answers)
             .compactMap { question, answer -> String? in
                 let text = answer.trimmingCharacters(in: .whitespacesAndNewlines)
-                return text.isEmpty ? nil : "\(question.english) · \(question.korean)\n\(text)"
+                return text.isEmpty ? nil : "\(question.title)\n\(text)"
             }
             .joined(separator: "\n\n")
     }
@@ -124,16 +124,12 @@ struct JournalEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Picker("작성 형식", selection: $format) {
-                    ForEach(ReflectionFormat.displayOrder, id: \.self) { option in
-                        Text(option.title).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
+                FormatTabBar(selection: $format)
                 
-                if let guide = format.guide {
-                    FormatGuideBanner(text: guide)
-                }
+                FormatGuideBanner(
+                    title: "나의 하루 돌아보기",
+                    text: "잠깐 멈춰, 오늘의 나를 만나보세요.\n한 줄씩만 적어도 충분해요."
+                )
                 
                 section("제목") {
                     TextField("오늘의 마이로그", text: $title)
@@ -155,6 +151,12 @@ struct JournalEditorView: View {
                     categorySuggestions: categorySuggestions,
                     tagSuggestions: tagSuggestions
                 )
+                
+                Text("완벽하지 않아도 괜찮은, 나의 기록")
+                    .font(.subheadline)
+                    .foregroundStyle(labelColor)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -174,6 +176,8 @@ struct JournalEditorView: View {
                 Button("저장"){
                     save()
                 }
+                .fontWeight(.semibold)
+                .buttonStyle(.borderedProminent)
                 .disabled(!isValid)
             }
         }
@@ -208,19 +212,21 @@ struct JournalEditorView: View {
         .fieldBackground()
     }
     
-    /// 자유 형식의 본문 입력칸
+    /// 자유 형식: 오늘의 질문 카드 + 큰 본문 입력칸
     private var freeContentSection: some View {
-        section("본문") {
+        VStack(alignment: .leading, spacing: 12) {
+            TodayQuestionCard()
+            
             TextEditor(text: $content)
                 .scrollContentBackground(.hidden)
-                .frame(height: 140)
+                .frame(minHeight: 260)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .fieldBackground()
                 .overlay(alignment: .topLeading) {
                     if content.isEmpty {
-                        Text("오늘 있었던 일과 느낀 점을 적어 보세요.")
-                            .foregroundStyle(labelColor.opacity(0.7))
+                        Text("오늘 하루를 자유롭게 적어보세요")
+                            .foregroundStyle(labelColor.opacity(0.8))
                             .padding(.horizontal, 17)
                             .padding(.vertical, 16)
                             .allowsHitTesting(false)
@@ -248,7 +254,7 @@ struct JournalEditorView: View {
         } else {
             target.content = composedContent
             target.answers = zip(format.questions, answers).map {
-                JournalDatabase.ReflectionAnswer(question: $0.english, text: $1.trimmingCharacters(in: .whitespacesAndNewlines))
+                JournalDatabase.ReflectionAnswer(question: $0.key, text: $1.trimmingCharacters(in: .whitespacesAndNewlines))
             }
         }
         target.isPeriod = isPeriod
@@ -300,8 +306,8 @@ private extension JournalEditorView {
 // - 위치 행은 만들지 않았다.
 //
 // [작성 형식]
-// - 자유는 본문 한 칸, KPT·4L은 질문별 입력칸이다. 형식마다 답변을 따로 들고 있다가 선택한 형식의 답변만 저장한다.
-// - KPT·4L 답변은 answers(질문 이름 + 답변)에 저장하고, 목록·검색·상세가 그대로 읽도록 content에도 합쳐서 넣는다.
+// - 자유는 본문 한 칸, 오늘의 경험·내일을 위한 정리는 질문별 입력칸이다. 형식마다 답변을 따로 들고 있다가 선택한 형식의 답변만 저장한다.
+// - 질문 형식의 답변은 answers(질문 이름 + 답변)에 저장하고, 목록·검색·상세가 그대로 읽도록 content에도 합쳐서 넣는다.
 //
 // [C 파트와의 연결]
 // - 카테고리/태그 입력은 C의 JournalClassificationPicker를 쓴다. 태그는 [String] 배열 그대로 저장한다.

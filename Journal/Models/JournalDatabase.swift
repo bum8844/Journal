@@ -22,8 +22,8 @@ final class JournalDatabase: Identifiable {
     // "자유 형식, 하루 회고, 사진 없음"으로 열린다.
     // 저장 프로퍼티는 확장(extension)에 둘 수 없어서 클래스 본문에 둔다.
     // 타입 정의(ReflectionFormat, ReflectionAnswer)는 JournalDatabase+ReflectionFormat.swift에 있다.
-    var format: ReflectionFormat = ReflectionFormat.free   // 회고 형식 (자유 / KPT / 4L)
-    var answers: [ReflectionAnswer] = []                   // 질문별 답변 (KPT, 4L일 때 사용)
+    var format: ReflectionFormat = ReflectionFormat.free   // 회고 형식 (자유 / 내일을 위한 정리 / 4L)
+    var answers: [ReflectionAnswer] = []                   // 질문별 답변 (내일을 위한 정리, 4L일 때 사용)
     var isPeriod: Bool = false                             // false = 하루 회고, true = 기간 회고
     var startDate: Date?                                   // 기간 시작일
     var endDate: Date?                                     // 기간 종료일
