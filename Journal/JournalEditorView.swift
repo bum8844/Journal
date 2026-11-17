@@ -268,7 +268,7 @@ private extension JournalEditorView {
     /// 기간 회고 + 1단계만 예약하고, 그 외에는 남은 예약을 지웁니다. 권한이 거부돼도 회고는 저장된 상태로 둡니다.
     func scheduleReminderAndClose(for journal: JournalDatabase) {
         Task {
-            let outcome = await PeriodReminderScheduler.shared.sync(journal)
+            let outcome = await PeriodReminderScheduler.shared.reconcile(journalID: journal.id, in: modelContext)
             if let message = outcome.alertMessage {
                 isSaving = false
                 reminderAlertMessage = message

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import UserNotifications
 
 /// 알림 권한 상태
@@ -61,13 +62,19 @@ struct SystemReminderCenter: ReminderCenter {
 }
 
 /// 저장, 수정, 삭제, 설정 변경에 맞춰 종료 알림을 예약하고 취소합니다.
+///
+/// 모든 작업은 "이 회고의 지금 저장 상태에 알림을 맞춘다"(reconcile)로 통일돼 있습니다.
+/// 작업이 들어온 시점의 값을 들고 있지 않고, 실행되는 순간 저장소에서 최신 상태를 다시 읽습니다.
+/// 그래서 재예약이 도는 중에 회고가 삭제되거나 수정돼도 옛 값으로 예약이 되살아나지 않고,
+/// 마지막으로 저장된 상태가 예약에 반영됩니다.
 @MainActor
 final class PeriodReminderScheduler {
     /// 예약 결과. 사용자에게 알려야 하는 것은 권한 거부와 예약 실패입니다.
     enum Outcome: Equatable {
-        case notTarget             // 하루 회고이거나 1단계가 아님 (남은 예약은 취소됨)
+        case notTarget             // 하루 회고이거나 1단계가 아니거나 삭제됨 (남은 예약은 취소됨)
         case scheduled(Int)        // 예약한 알림 수
         case nothingToSchedule     // 대상이지만 종료일의 모든 시각이 이미 지남
+        case superseded            // 예약하는 도중 회고가 바뀌거나 삭제돼 중단함 (이어지는 작업이 최신 상태로 맞춤)
         case permissionDenied
         case failed
 
@@ -78,11 +85,14 @@ final class PeriodReminderScheduler {
                 "알림 권한이 꺼져 있어 종료 알림을 예약하지 못했어요. 회고는 저장됐어요. 설정 앱에서 알림을 켠 뒤 다시 저장해 주세요."
             case .failed:
                 "종료 알림을 예약하지 못했어요. 회고는 저장됐어요. 잠시 후 다시 저장해 주세요."
-            case .notTarget, .scheduled, .nothingToSchedule:
+            case .notTarget, .scheduled, .nothingToSchedule, .superseded:
                 nil
             }
         }
     }
+
+    /// 회고 id로 지금 저장된 상태를 읽어 오는 함수. 삭제됐으면 nil을 돌려줍니다.
+    typealias SubjectLookup = @MainActor (UUID) -> ReminderSubject?
 
     static let shared = PeriodReminderScheduler(center: SystemReminderCenter())
 
@@ -93,27 +103,46 @@ final class PeriodReminderScheduler {
         self.center = center
     }
 
-    /// 회고 저장이 성공한 뒤 부릅니다. 이 회고의 예약을 모두 지우고 현재 값에 맞게 다시 예약합니다.
-    /// 대상이 처음 저장될 때 알림 권한을 요청합니다.
-    func sync(_ journal: JournalDatabase) async -> Outcome {
-        await sync(ReminderSubject(journal), requestPermission: true)
+    /// 앱에서 쓰는 창구. 저장소(ModelContext)에서 회고의 최신 상태를 읽어 알림을 맞춥니다.
+    /// 저장, 수정, 삭제가 끝난 뒤에 부르면 됩니다. 삭제된 회고는 남은 예약을 모두 취소합니다.
+    func reconcile(journalID: UUID, in context: ModelContext) async -> Outcome {
+        await reconcile(journalID: journalID, lookup: Self.lookup(in: context), requestPermission: true)
     }
 
-    func sync(
-        _ subject: ReminderSubject,
+    /// 설정이 바뀌었을 때 모든 회고에 새 방식을 적용합니다. 권한은 새로 요청하지 않습니다.
+    /// 목록은 회고 id만 받고, 각 회고의 상태는 처리하는 순간에 다시 읽습니다.
+    func resyncAll(journalIDs: [UUID], in context: ModelContext) async {
+        await resyncAll(journalIDs: journalIDs, lookup: Self.lookup(in: context))
+    }
+
+    /// 저장소에서 회고 한 건을 id로 찾아 알림 계산용 값으로 돌려줍니다.
+    static func lookup(in context: ModelContext) -> SubjectLookup {
+        { id in
+            var descriptor = FetchDescriptor<JournalDatabase>(predicate: #Predicate { $0.id == id })
+            descriptor.fetchLimit = 1
+            return (try? context.fetch(descriptor))?.first.map { ReminderSubject($0) }
+        }
+    }
+
+    func reconcile(
+        journalID: UUID,
+        lookup: @escaping SubjectLookup,
         requestPermission: Bool,
         mode: PeriodEndReminderMode? = nil,
-        now: Date = .now,
+        now: Date? = nil,
         calendar: Calendar = .current
     ) async -> Outcome {
-        // 설정에 저장된 방식. 검증할 때는 직접 넘길 수 있습니다.
-        let mode = mode ?? .current
-        return await serialized { [center] in
-            let prefix = PeriodReminderPlanner.identifierPrefix(for: subject.id)
+        await serialized { [center] in
+            // 설정 방식과 현재 시각도 실행하는 순간의 값을 씁니다.
+            let mode = mode ?? .current
+            let now = now ?? .now
+            let prefix = PeriodReminderPlanner.identifierPrefix(for: journalID)
+
+            // 1) 남은 예약을 지우고, 지금 상태가 대상이 아니면(삭제, 하루 전환, 2·3단계) 여기서 끝냅니다.
             await center.removePending(withIdentifierPrefix: prefix)
+            guard let subject = lookup(journalID), subject.isReminderTarget else { return .notTarget }
 
-            guard subject.isReminderTarget else { return .notTarget }
-
+            // 2) 권한 확인 (첫 대상 저장일 때만 요청)
             var authorization = await center.authorization()
             if authorization == .notDetermined && requestPermission {
                 _ = await center.requestAuthorization()
@@ -121,37 +150,45 @@ final class PeriodReminderScheduler {
             }
             guard authorization == .authorized else { return .permissionDenied }
 
-            let reminders = PeriodReminderPlanner.reminders(for: subject, mode: mode, now: now, calendar: calendar)
+            // 3) 권한을 기다리는 사이에 바뀌었을 수 있으니 예약 직전에 최신 상태로 다시 계산합니다.
+            guard let latest = lookup(journalID), latest.isReminderTarget else { return .notTarget }
+            let reminders = PeriodReminderPlanner.reminders(for: latest, mode: mode, now: now, calendar: calendar)
             guard !reminders.isEmpty else { return .nothingToSchedule }
 
+            // 4) 한 건씩 예약하되, 건마다 회고가 그대로인지 확인합니다. 바뀌었으면 멈추고 지웁니다.
             do {
                 for reminder in reminders {
+                    guard lookup(journalID) == latest else {
+                        await center.removePending(withIdentifierPrefix: prefix)
+                        return .superseded
+                    }
                     try await center.add(reminder, calendar: calendar)
                 }
-                return .scheduled(reminders.count)
             } catch {
                 await center.removePending(withIdentifierPrefix: prefix)
                 return .failed
             }
+
+            // 5) 마지막 add가 끝나는 사이에 바뀌었는지 한 번 더 확인합니다.
+            guard lookup(journalID) == latest else {
+                await center.removePending(withIdentifierPrefix: prefix)
+                return .superseded
+            }
+            return .scheduled(reminders.count)
         }
     }
 
-    /// 회고를 지울 때 남은 예약을 취소합니다.
-    func cancel(journalID: UUID) async {
-        await serialized { [center] in
-            await center.removePending(withIdentifierPrefix: PeriodReminderPlanner.identifierPrefix(for: journalID))
-        }
-    }
-
-    /// 설정이 바뀌었을 때 모든 대상 회고의 남은 예약에 새 방식을 적용합니다. 권한은 새로 요청하지 않습니다.
     func resyncAll(
-        _ journals: [ReminderSubject],
+        journalIDs: [UUID],
+        lookup: @escaping SubjectLookup,
         mode: PeriodEndReminderMode? = nil,
-        now: Date = .now,
+        now: Date? = nil,
         calendar: Calendar = .current
     ) async {
-        for subject in journals where subject.isReminderTarget {
-            _ = await sync(subject, requestPermission: false, mode: mode, now: now, calendar: calendar)
+        for id in journalIDs {
+            // 대상이 아닌 회고(이미 삭제되었거나 2·3단계로 내려간 회고)는 예약을 건드리지 않고 지나갑니다.
+            // 그 시점의 상태를 실행할 때 읽기 때문에, 처리 도중 바뀐 회고도 최신 상태가 반영됩니다.
+            _ = await reconcile(journalID: id, lookup: lookup, requestPermission: false, mode: mode, now: now, calendar: calendar)
         }
     }
 

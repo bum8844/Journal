@@ -103,10 +103,12 @@ struct ThemeSettingsView: View {
         .navigationTitle("설정")
     }
 
-    /// 저장된 모든 회고를 읽어 대상 회고의 남은 알림을 새 방식으로 다시 예약합니다.
+    /// 저장된 모든 회고의 알림을 새 방식으로 다시 예약합니다.
+    /// 회고 id만 넘기고, 각 회고의 상태는 처리하는 순간 저장소에서 다시 읽습니다.
+    /// 그래서 처리 도중 삭제하거나 중요도를 낮춘 회고가 옛 값으로 되살아나지 않습니다.
     private func resyncReminders() {
         let journals = (try? modelContext.fetch(FetchDescriptor<JournalDatabase>())) ?? []
-        let subjects = journals.map { ReminderSubject($0) }
-        Task { await PeriodReminderScheduler.shared.resyncAll(subjects) }
+        let ids = journals.map(\.id)
+        Task { await PeriodReminderScheduler.shared.resyncAll(journalIDs: ids, in: modelContext) }
     }
 }

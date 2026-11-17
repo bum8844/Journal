@@ -89,11 +89,11 @@ struct JournalDetailView: View {
         // 화면이 사라진 뒤에 지워야, 지워진 데이터를 이 화면이 다시 읽다가 문제가 생기지 않는다
         .onDisappear {
             guard shouldDeleteOnDisappear else { return }
-            // 삭제한 회고의 종료 알림이 남지 않게 먼저 취소한다
             let journalID = journal.id
-            Task { await PeriodReminderScheduler.shared.cancel(journalID: journalID) }
             modelContext.delete(journal)
             try? modelContext.save()
+            // 삭제가 저장된 뒤에, 저장소의 최신 상태에 맞춰 종료 알림을 정리한다
+            Task { _ = await PeriodReminderScheduler.shared.reconcile(journalID: journalID, in: modelContext) }
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {

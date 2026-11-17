@@ -180,13 +180,14 @@ struct JournalListView: View {
 private extension JournalListView {
     /// 저장소에서 회고를 지우고 바로 저장한다 (앱을 다시 켜도 삭제된 상태 유지)
     func delete(_ journal: JournalDatabase) {
-        // 삭제한 회고의 종료 알림이 남지 않게 먼저 취소한다
         let journalID = journal.id
-        Task { await PeriodReminderScheduler.shared.cancel(journalID: journalID) }
         withAnimation {
             modelContext.delete(journal)
             try? modelContext.save()
         }
+        // 삭제가 저장된 뒤에, 저장소의 최신 상태에 맞춰 종료 알림을 정리한다
+        // (삭제가 저장되지 않았다면 회고가 남아 있으므로 알림도 그대로 유지된다)
+        Task { _ = await PeriodReminderScheduler.shared.reconcile(journalID: journalID, in: modelContext) }
     }
 }
 
