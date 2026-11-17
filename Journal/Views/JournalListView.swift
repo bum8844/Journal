@@ -65,14 +65,14 @@ private struct JournalRow: View {
             Text(journal.title.isEmpty ? "제목 없음" : journal.title)
                 .font(.headline)
                 .foregroundStyle(JournalTheme.text)
-            Text(journal.content)
+            Text(journal.content.isEmpty ? (journal.answers.first?.text ?? "") : journal.content)
                 .font(.subheadline)
                 .foregroundStyle(JournalTheme.subText)
                 .lineLimit(2)
             HStack {
                 Text(journal.category)
                 Spacer()
-                Text(journal.createdAt, format: .dateTime.year().month().day())
+                Text(journal.displayDateText)
             }
             .font(.caption)
             .foregroundStyle(JournalTheme.subText)

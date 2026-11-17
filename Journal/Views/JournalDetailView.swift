@@ -15,7 +15,7 @@ struct JournalDetailView: View {
                 HStack {
                     Text(journal.category)
                     Text("·")
-                    Text(journal.createdAt, format: .dateTime.year().month().day())
+                    Text(journal.displayDateText)
                 }
                 .font(.subheadline)
                 .foregroundStyle(JournalTheme.subText)
@@ -26,9 +26,29 @@ struct JournalDetailView: View {
                         .foregroundStyle(JournalTheme.accent)
                 }
 
-                Text(journal.content)
-                    .font(.body)
-                    .foregroundStyle(JournalTheme.text)
+                if let photoData = journal.photoData, let image = UIImage(data: photoData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+
+                if !journal.content.isEmpty {
+                    Text(journal.content)
+                        .font(.body)
+                        .foregroundStyle(JournalTheme.text)
+                }
+
+                ForEach(Array(journal.answers.enumerated()), id: \.offset) { _, answer in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(answer.question)
+                            .font(.headline)
+                            .foregroundStyle(JournalTheme.accent)
+                        Text(answer.text)
+                            .font(.body)
+                            .foregroundStyle(JournalTheme.text)
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
