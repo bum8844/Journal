@@ -27,51 +27,66 @@ struct JournalDetailView: View {
 
             if !isRemoved {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack(alignment: .top) {
-                            Text(journal.title)
-                                .font(.largeTitle.bold())
-                                .foregroundStyle(JournalTheme.text)
+                    VStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack(alignment: .top) {
+                                Text(journal.title)
+                                    .font(.largeTitle.bold())
+                                    .foregroundStyle(JournalTheme.text)
 
-                            Spacer(minLength: 8)
+                                Spacer(minLength: 8)
 
-                            Text(journal.category)
-                                .font(.footnote)
-                                .foregroundStyle(JournalTheme.badgeText)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 5)
-                                .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
-                        }
+                                Text(journal.category)
+                                    .font(.footnote)
+                                    .foregroundStyle(JournalTheme.badgeText)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 5)
+                                    .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
+                            }
 
-                        if !journal.tags.isEmpty {
-                            Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
+                            if !journal.tags.isEmpty {
+                                Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
+                                    .font(.subheadline)
+                                    .foregroundStyle(JournalTheme.accent)
+                            }
+
+                            Text(journal.displayDateString)
                                 .font(.subheadline)
-                                .foregroundStyle(JournalTheme.accent)
+                                .foregroundStyle(JournalTheme.subText)
+
+                            Divider()
+
+                            if let photoData = journal.photoData, let image = UIImage(data: photoData) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .accessibilityLabel("첨부한 사진")
+                            }
+
+                            Text(journal.content)
+                                .font(.body)
+                                .foregroundStyle(JournalTheme.text)
+                                .lineSpacing(6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .padding(24)
+                        .glassCard(cornerRadius: 32)
 
-                        Text(journal.displayDateString)
-                            .font(.subheadline)
-                            .foregroundStyle(JournalTheme.subText)
-
-                        Divider()
-
-                        if let photoData = journal.photoData, let image = UIImage(data: photoData) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(maxWidth: .infinity)
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                                .accessibilityLabel("첨부한 사진")
-                        }
-
-                        Text(journal.content)
-                            .font(.body)
-                            .foregroundStyle(JournalTheme.text)
-                            .lineSpacing(6)
+                        if let comment = journal.aiComment {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("AI 한마디", systemImage: "sparkles")
+                                    .font(.headline)
+                                    .foregroundStyle(JournalTheme.accent)
+                                Text(comment)
+                                    .foregroundStyle(JournalTheme.text)
+                            }
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(20)
+                            .glassCard()
+                        }
                     }
-                    .padding(24)
-                    .glassCard(cornerRadius: 32)
                     .padding(20)
                 }
             }

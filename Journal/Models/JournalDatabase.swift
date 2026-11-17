@@ -32,6 +32,7 @@ final class JournalDatabase: Identifiable {
     // 이전 버전에서 저장한 글에는 값이 없어서 옵셔널로 둔다. (필수 값으로 두면 옛 글을 읽을 때 앱이 꺼진다)
     // 값이 없으면 2(보통)로 취급하니, 읽을 때는 `effectiveImportance`를 쓴다.
     var importance: ReflectionImportance?
+    var aiComment: String?
     
     // 새 매개변수는 모두 기본값이 있어서 기존 호출(title, content, category, tags)은 그대로 쓸 수 있다.
     init(

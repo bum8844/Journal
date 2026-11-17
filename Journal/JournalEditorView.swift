@@ -34,6 +34,10 @@ struct JournalEditorView: View {
     // 저장하는 동안(알림 권한 요청 포함) 저장 버튼을 막아 같은 글이 두 번 저장되지 않게 합니다.
     @State private var isSaving = false
     @State private var reminderAlertMessage: String?
+    @State private var aiComment: String?
+    @State private var aiCommentInput: ReflectionCommentInput?
+    @State private var aiCommentError: String?
+    @State private var aiCommentTask: Task<Void, Never>?
     
     init(journal: JournalDatabase? = nil) {
         self.journal = journal
@@ -60,6 +64,12 @@ struct JournalEditorView: View {
         ))
         _photoData = State(initialValue: journal?.photoData)
         _importance = State(initialValue: journal?.effectiveImportance ?? .normal)
+        if let journal, let comment = journal.aiComment {
+            _aiComment = State(initialValue: comment)
+            _aiCommentInput = State(initialValue: ReflectionCommentInput(
+                format: savedFormat.title, title: journal.title, body: journal.content
+            ))
+        }
     }
     
     // 추천 목록에 쓰기 위해 이미 저장된 회고를 읽는다
@@ -116,6 +126,14 @@ struct JournalEditorView: View {
             .joined(separator: "\n\n")
     }
     
+    private var commentInput: ReflectionCommentInput {
+        ReflectionCommentInput(format: format.title, title: title, body: format == .free ? content : composedContent)
+    }
+
+    private var currentAIComment: String? {
+        aiCommentInput == commentInput ? aiComment : nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -141,6 +159,8 @@ struct JournalEditorView: View {
                     QuestionCard(questions: format.questions, answers: answersBinding)
                 }
                 
+                aiCommentSection
+
                 JournalPeriodPicker(value: $period)
                 
                 JournalImportancePicker(importance: $importance, isPeriod: period.isPeriod)
@@ -215,6 +235,49 @@ struct JournalEditorView: View {
         }
     }
     
+    private var aiCommentSection: some View {
+        section("AI 한마디") {
+            if let currentAIComment {
+                Text(currentAIComment)
+                    .foregroundStyle(JournalTheme.text)
+            }
+            if let message = ReflectionCommentGenerator.unavailableMessage ?? aiCommentError {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(JournalTheme.subText)
+            }
+            if aiCommentTask != nil {
+                ProgressView("AI 한마디를 만드는 중…")
+                    .font(.footnote)
+            } else {
+                Button(currentAIComment == nil ? "AI 한마디 생성" : "다시 생성", systemImage: "sparkles") {
+                    generateAIComment()
+                }
+                .disabled(!commentInput.canGenerate || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
+            }
+        }
+        .onDisappear {
+            aiCommentTask?.cancel()
+        }
+    }
+
+    private func generateAIComment() {
+        let input = commentInput
+        aiCommentError = nil
+        aiCommentTask = Task { @MainActor in
+            defer { aiCommentTask = nil }
+            do {
+                let comment = try await ReflectionCommentGenerator.generate(for: input)
+                guard !Task.isCancelled, input == commentInput else { return }
+                aiCommentInput = input
+                aiComment = comment
+            } catch {
+                guard !Task.isCancelled, input == commentInput else { return }
+                aiCommentError = "AI 한마디를 만들지 못했어요. 다시 시도해 주세요."
+            }
+        }
+    }
+
     func save() {
         guard isValid, !isSaving else { return }
         isSaving = true
@@ -244,6 +307,7 @@ struct JournalEditorView: View {
         target.endDate = period.savedEndDate
         target.photoData = photoData
         target.importance = importance
+        target.aiComment = currentAIComment
         
         if journal == nil {
             modelContext.insert(target)
