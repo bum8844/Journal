@@ -27,8 +27,13 @@ struct JournalEditorView: View {
     // 날짜(하루/기간). 새 글은 오늘 하루로 시작합니다.
     @State var period: JournalPeriodValue
     @State var photoData: Data?
+    // 중요도. 새 글과 값이 없던 기존 글은 2단계(보통)입니다.
+    @State var importance: ReflectionImportance
     
     @State var showingSaveError:Bool = false
+    // 저장하는 동안(알림 권한 요청 포함) 저장 버튼을 막아 같은 글이 두 번 저장되지 않게 합니다.
+    @State private var isSaving = false
+    @State private var reminderAlertMessage: String?
     
     init(journal: JournalDatabase? = nil) {
         self.journal = journal
@@ -54,6 +59,7 @@ struct JournalEditorView: View {
             endDate: journal?.endDate
         ))
         _photoData = State(initialValue: journal?.photoData)
+        _importance = State(initialValue: journal?.importance ?? .normal)
     }
     
     // 추천 목록에 쓰기 위해 이미 저장된 회고를 읽는다
@@ -137,6 +143,8 @@ struct JournalEditorView: View {
                 
                 JournalPeriodPicker(value: $period)
                 
+                JournalImportancePicker(importance: $importance, isPeriod: period.isPeriod)
+                
                 JournalPhotoPicker(photoData: $photoData)
                 
                 JournalClassificationPicker(
@@ -165,8 +173,17 @@ struct JournalEditorView: View {
                 Button("저장"){
                     save()
                 }
-                .disabled(!isValid)
+                .disabled(!isValid || isSaving)
             }
+        }
+        // 알림을 예약하지 못해도 회고는 이미 저장된 상태입니다. 알려 준 뒤 화면을 닫습니다.
+        .alert("종료 알림을 예약하지 못했어요", isPresented: Binding(
+            get: { reminderAlertMessage != nil },
+            set: { if !$0 { reminderAlertMessage = nil } }
+        )) {
+            Button("확인") { dismiss() }
+        } message: {
+            Text(reminderAlertMessage ?? "")
         }
         .alert("저장하지 못했습니다.", isPresented: $showingSaveError) {
             Button("확인", role: .cancel) {
@@ -199,7 +216,8 @@ struct JournalEditorView: View {
     }
     
     func save() {
-        guard isValid else { return }
+        guard isValid, !isSaving else { return }
+        isSaving = true
         
         // 입력창에 쓰다 만 태그도 저장에 포함한다
         tags = JournalDatabase.tags(tags, adding: tagInput)
@@ -225,6 +243,7 @@ struct JournalEditorView: View {
         target.startDate = period.startDate
         target.endDate = period.savedEndDate
         target.photoData = photoData
+        target.importance = importance
         
         if journal == nil {
             modelContext.insert(target)
@@ -233,9 +252,10 @@ struct JournalEditorView: View {
         
         do {
             try modelContext.save()
-            dismiss()
+            scheduleReminderAndClose(for: target)
         } catch {
             modelContext.rollback()
+            isSaving = false
             showingSaveError = true
         }
     }
@@ -244,6 +264,20 @@ struct JournalEditorView: View {
 // MARK: - 보조 뷰
 
 private extension JournalEditorView {
+    /// 저장이 성공한 뒤 종료 알림을 맞춰 예약하고 화면을 닫습니다.
+    /// 기간 회고 + 1단계만 예약하고, 그 외에는 남은 예약을 지웁니다. 권한이 거부돼도 회고는 저장된 상태로 둡니다.
+    func scheduleReminderAndClose(for journal: JournalDatabase) {
+        Task {
+            let outcome = await PeriodReminderScheduler.shared.sync(journal)
+            if let message = outcome.alertMessage {
+                isSaving = false
+                reminderAlertMessage = message
+            } else {
+                dismiss()
+            }
+        }
+    }
+
     func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)

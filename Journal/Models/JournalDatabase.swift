@@ -28,6 +28,8 @@ final class JournalDatabase: Identifiable {
     var startDate: Date?                                   // 기간 시작일
     var endDate: Date?                                     // 기간 종료일
     @Attribute(.externalStorage) var photoData: Data?      // 사진 한 장
+    // 중요도. 1(높음)인 기간 회고만 종료일 알림을 받는다. 값이 없던 기존 글은 2(보통)로 열린다.
+    var importance: ReflectionImportance = ReflectionImportance.normal
     
     // 새 매개변수는 모두 기본값이 있어서 기존 호출(title, content, category, tags)은 그대로 쓸 수 있다.
     init(
@@ -40,7 +42,8 @@ final class JournalDatabase: Identifiable {
         isPeriod: Bool = false,
         startDate: Date? = nil,
         endDate: Date? = nil,
-        photoData: Data? = nil
+        photoData: Data? = nil,
+        importance: ReflectionImportance = .normal
     ) {
         self.title = title
         self.content = content
@@ -52,6 +55,7 @@ final class JournalDatabase: Identifiable {
         self.startDate = startDate
         self.endDate = endDate
         self.photoData = photoData
+        self.importance = importance
     }
 }
 
