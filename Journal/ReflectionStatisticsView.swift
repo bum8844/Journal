@@ -57,28 +57,21 @@ struct ReflectionStatisticsView: View {
             .listRowBackground(JournalTheme.glassFill)
 
             if let interval = selectedInterval {
-                // 주·월간 화면 모두 같은 집계 코드에 선택한 기간과 작성일·태그를 넘깁니다.
-                let entries = reflections.map {
-                    StatisticsEntry(createdAt: $0.createdAt, tags: $0.tags)
+                // 집계 기준은 기존 작성일입니다. 조회 범위 밖의 회고는 사진 데이터를 읽지 않습니다.
+                let entries = reflections.compactMap { reflection -> StatisticsEntry? in
+                    let date = reflection.createdAt
+                    guard interval.start <= date, date < interval.end else { return nil }
+                    return StatisticsEntry(
+                        createdAt: date,
+                        tags: reflection.tags,
+                        category: reflection.category,
+                        isPeriod: reflection.isPeriod,
+                        hasPhoto: reflection.photoData?.isEmpty == false
+                    )
                 }
-                let statistics = ReflectionStatistics(entries: entries, interval: interval)
+                let statistics = ReflectionStatistics(entries: entries, interval: interval, calendar: calendar)
 
-                Section("회고 건수") {
-                    Text("\(statistics.reflectionCount)건")
-                }
-                .listRowBackground(JournalTheme.glassFill)
-
-                Section("자주 쓴 태그") {
-                    if statistics.tagCounts.isEmpty {
-                        Text("이 기간에 등록된 태그가 없어요.")
-                            .foregroundStyle(JournalTheme.subText)
-                    }
-
-                    ForEach(statistics.tagCounts) { item in
-                        LabeledContent(item.tag, value: "\(item.count)건")
-                    }
-                }
-                .listRowBackground(JournalTheme.glassFill)
+                ReflectionStatisticsCharts(statistics: statistics, calendar: calendar)
             }
         }
         // 팀 공통 테마: 시스템 목록 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
