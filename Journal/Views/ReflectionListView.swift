@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 /// 저장된 회고 목록. 항목을 누르면 상세로 이동하고, 왼쪽으로 스와이프하면 삭제합니다.
-struct JournalListView: View {
+struct ReflectionListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \JournalDatabase.createdAt, order: .reverse)
     private var journals: [JournalDatabase]
@@ -30,7 +30,7 @@ struct JournalListView: View {
             .journalBackground()
             .navigationTitle("회고")
             .navigationDestination(for: JournalDatabase.self) { journal in
-                JournalDetailView(journal: journal)
+                ReflectionDetailView(journal: journal)
             }
             .alert("삭제하지 못했어요", isPresented: Binding(
                 get: { deleteErrorMessage != nil },
@@ -89,5 +89,5 @@ private struct JournalRow: View {
     container.mainContext.insert(
         JournalDatabase(title: "첫 회고", content: "이번 주에 배운 점을 정리했다.", category: "학습", tags: ["swift"])
     )
-    return JournalListView().modelContainer(container)
+    return ReflectionListView().modelContainer(container)
 }

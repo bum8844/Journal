@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 /// 회고 한 건의 상세 화면.
-struct JournalDetailView: View {
+struct ReflectionDetailView: View {
     let journal: JournalDatabase
 
     var body: some View {
