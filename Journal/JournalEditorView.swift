@@ -24,12 +24,9 @@ struct JournalEditorView: View {
     @State var format: ReflectionFormat = .free
     // 형식마다 답변을 따로 들고 있어, 형식을 바꿔도 다른 형식의 입력이 섞이지 않습니다.
     @State var answersByFormat: [ReflectionFormat: [String]] = [:]
-    // 기록 기간. 하루 회고면 isPeriod가 false이고 날짜는 저장하지 않습니다.
-    @State var isPeriod: Bool = false
-    @State var startDate: Date = Date()
-    @State var endDate: Date = Date()
+    // 날짜(하루/기간). 새 글은 오늘 하루로 시작합니다.
+    @State var period: JournalPeriodValue
     @State var photoData: Data?
-    @State var showingPeriodSheet: Bool = false
     
     @State var showingSaveError:Bool = false
     
@@ -50,9 +47,12 @@ struct JournalEditorView: View {
             }
             _answersByFormat = State(initialValue: [savedFormat: texts])
         }
-        _isPeriod = State(initialValue: journal?.isPeriod ?? false)
-        _startDate = State(initialValue: journal?.startDate ?? Date())
-        _endDate = State(initialValue: journal?.endDate ?? journal?.startDate ?? Date())
+        // 날짜가 없는 기존 글은 최초 작성일을 보여 줍니다.
+        _period = State(initialValue: JournalPeriodValue(
+            isPeriod: journal?.isPeriod ?? false,
+            startDate: journal?.startDate ?? journal?.createdAt,
+            endDate: journal?.endDate
+        ))
         _photoData = State(initialValue: journal?.photoData)
     }
     
@@ -89,17 +89,6 @@ struct JournalEditorView: View {
         )
     }
     
-    /// 종료일이 시작일보다 빠르면 저장하지 않습니다. 하루 회고는 항상 통과합니다.
-    private var isPeriodValid: Bool {
-        PeriodSheet.isValid(isPeriod: isPeriod, startDate: startDate, endDate: endDate)
-    }
-    
-    /// 기간 줄 오른쪽에 보이는 현재 선택
-    private var periodStatus: String {
-        guard isPeriod else { return "하루" }
-        return "\(startDate.koreanDateString) ~ \(endDate.koreanDateString)"
-    }
-    
     private var hasBody: Bool {
         if format == .free {
             return !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -108,7 +97,7 @@ struct JournalEditorView: View {
     }
     
     var isValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && hasBody && isPeriodValid
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && hasBody && period.isValid
     }
     
     /// KPT·4L 답변을 목록·검색·상세가 그대로 읽을 수 있도록 content 한 덩어리로 만듭니다.
@@ -146,7 +135,9 @@ struct JournalEditorView: View {
                     QuestionCard(questions: format.questions, answers: answersBinding)
                 }
                 
-                optionsCard
+                JournalPeriodPicker(value: $period)
+                
+                JournalPhotoPicker(photoData: $photoData)
                 
                 JournalClassificationPicker(
                     category: $category,
@@ -177,9 +168,6 @@ struct JournalEditorView: View {
                 .disabled(!isValid)
             }
         }
-        .sheet(isPresented: $showingPeriodSheet) {
-            PeriodSheet(isPeriod: $isPeriod, startDate: $startDate, endDate: $endDate)
-        }
         .alert("저장하지 못했습니다.", isPresented: $showingSaveError) {
             Button("확인", role: .cancel) {
                 
@@ -187,25 +175,6 @@ struct JournalEditorView: View {
         } message: {
             Text("입력한 내용은 그대로 유지됩니다. 잠시 후 다시 저장해 주세요")
         }
-    }
-    
-    /// 기간·사진 버튼이 들어 있는 카드. 기간 줄은 누르면 기간 선택 화면이, 사진 줄은 사진 보관함이 열립니다.
-    private var optionsCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                showingPeriodSheet = true
-            } label: {
-                EditorOptionRow(systemImage: "calendar", title: "기록 기간", status: periodStatus)
-            }
-            .buttonStyle(.plain)
-            
-            Divider().overlay(JournalTheme.glassBorder)
-            
-            PhotoAttachment(photoData: $photoData)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
-        .fieldBackground()
     }
     
     /// 자유 형식의 본문 입력칸
@@ -251,9 +220,10 @@ struct JournalEditorView: View {
                 JournalDatabase.ReflectionAnswer(question: $0.english, text: $1.trimmingCharacters(in: .whitespacesAndNewlines))
             }
         }
-        target.isPeriod = isPeriod
-        target.startDate = isPeriod ? startDate : nil
-        target.endDate = isPeriod ? endDate : nil
+        // 날짜 규칙: 하루는 startDate가 선택일이고 endDate는 비운다. 기간은 startDate~endDate다.
+        target.isPeriod = period.isPeriod
+        target.startDate = period.startDate
+        target.endDate = period.savedEndDate
         target.photoData = photoData
         
         if journal == nil {
@@ -309,6 +279,7 @@ private extension JournalEditorView {
 // - 카테고리는 비어 있어도 저장할 수 있다(README 기준은 제목·본문만 필수). 목록 필터에서는 빈 카테고리를 보여 주지 않는다.
 //
 // [기간·사진]
-// - 기록 기간 줄은 PeriodSheet를, 사진 줄은 PhotoAttachment(사진 보관함)를 연다. 값은 바인딩으로 이 화면에 바로 들어온다.
-// - 기간·사진 입력 담당이 만든 폼으로 바꿀 때는 optionsCard 안의 두 줄만 교체하면 된다.
-// - 종료일이 시작일보다 빠르면 저장 버튼을 막는다. 하루 회고는 날짜를 저장하지 않는다.
+// - 날짜는 JournalPeriodPicker(value: $period), 사진은 JournalPhotoPicker(photoData: $photoData)를 쓴다.
+// - 저장 버튼은 period.isValid(시작일이 오늘 이후이거나 종료일이 시작일보다 빠르면 false)로도 막는다.
+// - 날짜 규칙(B): 하루 회고도 선택한 날짜를 startDate에 저장하고 endDate는 비운다. 기간 회고는 startDate~endDate다.
+//   날짜가 없는 기존 글은 편집 화면에서 최초 작성일(createdAt)을 보여 주고, 저장하면 그 날짜가 startDate에 들어간다.
