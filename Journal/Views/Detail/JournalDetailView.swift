@@ -67,8 +67,8 @@ struct JournalDetailView: View {
         .navigationDestination(isPresented: $isEditing) {
             JournalEditorView(journal: journal)
         }
-        // [YeongyuJung 수정] 삭제 확인 창 추가
-        .confirmationDialog("이 회고를 삭제할까요?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+        // [YeongyuJung 수정] 삭제 확인 창을 얼럿(alert)으로 표시
+        .alert("이 회고를 삭제할까요?", isPresented: $isConfirmingDelete) {
             Button("삭제", role: .destructive) {
                 shouldDeleteOnDisappear = true
                 dismiss()
