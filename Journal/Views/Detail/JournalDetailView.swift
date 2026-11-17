@@ -6,11 +6,17 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct JournalDetailView: View {
     let journal: JournalDatabase
     // 수정 버튼을 누르면 같은 회고를 편집 화면으로 연다
     @State private var isEditing = false
+    // 삭제는 확인을 받은 뒤, 화면이 닫힌 다음에 저장소에서 지운다
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @State private var isConfirmingDelete = false
+    @State private var shouldDeleteOnDisappear = false
 
     var body: some View {
         ZStack {
@@ -61,9 +67,23 @@ struct JournalDetailView: View {
         .navigationDestination(isPresented: $isEditing) {
             JournalEditorView(journal: journal)
         }
+        .confirmationDialog("이 회고를 삭제할까요?", isPresented: $isConfirmingDelete, titleVisibility: .visible) {
+            Button("삭제", role: .destructive) {
+                shouldDeleteOnDisappear = true
+                dismiss()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("삭제한 회고는 되돌릴 수 없어요.")
+        }
+        // 화면이 사라진 뒤에 지워야, 지워진 데이터를 이 화면이 다시 읽다가 문제가 생기지 않는다
+        .onDisappear {
+            guard shouldDeleteOnDisappear else { return }
+            modelContext.delete(journal)
+            try? modelContext.save()
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                // 삭제 버튼은 아직 연결하지 않았다
                 Button {
                     isEditing = true
                 } label: {
@@ -72,7 +92,7 @@ struct JournalDetailView: View {
                 .buttonStyle(PressColorButtonStyle(pressed: .blue))
 
                 Button(role: .destructive) {
-                    // TODO: 삭제 후 목록으로 돌아가기
+                    isConfirmingDelete = true
                 } label: {
                     Label("삭제", systemImage: "trash")
                 }
