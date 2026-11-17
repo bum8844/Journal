@@ -28,8 +28,10 @@ final class JournalDatabase: Identifiable {
     var startDate: Date?                                   // 기간 시작일
     var endDate: Date?                                     // 기간 종료일
     @Attribute(.externalStorage) var photoData: Data?      // 사진 한 장
-    // 중요도. 1(높음)인 기간 회고만 종료일 알림을 받는다. 값이 없던 기존 글은 2(보통)로 열린다.
-    var importance: ReflectionImportance = ReflectionImportance.normal
+    // 중요도. 1(높음)인 기간 회고만 종료일 알림을 받는다.
+    // 이전 버전에서 저장한 글에는 값이 없어서 옵셔널로 둔다. (필수 값으로 두면 옛 글을 읽을 때 앱이 꺼진다)
+    // 값이 없으면 2(보통)로 취급하니, 읽을 때는 `effectiveImportance`를 쓴다.
+    var importance: ReflectionImportance?
     
     // 새 매개변수는 모두 기본값이 있어서 기존 호출(title, content, category, tags)은 그대로 쓸 수 있다.
     init(

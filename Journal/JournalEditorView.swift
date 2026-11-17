@@ -59,7 +59,7 @@ struct JournalEditorView: View {
             endDate: journal?.endDate
         ))
         _photoData = State(initialValue: journal?.photoData)
-        _importance = State(initialValue: journal?.importance ?? .normal)
+        _importance = State(initialValue: journal?.effectiveImportance ?? .normal)
     }
     
     // 추천 목록에 쓰기 위해 이미 저장된 회고를 읽는다

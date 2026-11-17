@@ -30,7 +30,7 @@ struct ReminderSubject: Equatable {
             id: journal.id,
             title: journal.title,
             isPeriod: journal.isPeriod,
-            importance: journal.importance,
+            importance: journal.effectiveImportance,
             endDate: journal.endDate
         )
     }
