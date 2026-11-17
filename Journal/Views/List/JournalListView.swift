@@ -23,6 +23,8 @@ struct JournalListView: View {
     @State private var selectedJournal: JournalDatabase?
     // + 버튼을 누르면 새 회고 작성 화면으로 이동한다
     @State private var isAddingNew = false
+    // 삭제를 저장하지 못했을 때 알려 주는 얼럿
+    @State private var isShowingDeleteError = false
     // 알림을 누르면 해당 회고를 열기 위해 알림 담당이 전달해 주는 값
     private let router = NotificationRouter.shared
     @FocusState private var isSearchFocused: Bool
@@ -85,6 +87,9 @@ struct JournalListView: View {
             }
             .onChange(of: tags) {
                 selectedTags.formIntersection(tags)
+            }
+            .alert(JournalDeletion.failureMessage, isPresented: $isShowingDeleteError) {
+                Button("확인", role: .cancel) {}
             }
         }
     }
@@ -181,12 +186,16 @@ private extension JournalListView {
     /// 저장소에서 회고를 지우고 바로 저장한다 (앱을 다시 켜도 삭제된 상태 유지)
     func delete(_ journal: JournalDatabase) {
         let journalID = journal.id
+        var isDeleted = false
         withAnimation {
-            modelContext.delete(journal)
-            try? modelContext.save()
+            isDeleted = JournalDeletion.delete(journal, in: modelContext)
         }
-        // 삭제가 저장된 뒤에, 저장소의 최신 상태에 맞춰 종료 알림을 정리한다
-        // (삭제가 저장되지 않았다면 회고가 남아 있으므로 알림도 그대로 유지된다)
+        guard isDeleted else {
+            // 저장하지 못해 회고를 되돌렸다. 회고가 그대로 있으니 기존 알림 예약도 건드리지 않는다
+            isShowingDeleteError = true
+            return
+        }
+        // 삭제 저장이 성공한 뒤에만 종료 알림을 정리한다
         Task { _ = await PeriodReminderScheduler.shared.reconcile(journalID: journalID, in: modelContext) }
     }
 }
