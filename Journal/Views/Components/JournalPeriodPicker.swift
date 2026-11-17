@@ -78,19 +78,20 @@ struct JournalPeriodPicker: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(JournalTheme.subText)
 
-            HStack(spacing: 8) {
-                JournalChip(title: "하루", isSelected: !value.isPeriod) { setPeriod(false) }
-                JournalChip(title: "기간", isSelected: value.isPeriod) { setPeriod(true) }
+            Picker("회고 기간", selection: periodBinding) {
+                Text("하루").tag(false)
+                Text("기간").tag(true)
             }
+            .pickerStyle(.segmented)
 
             VStack(spacing: 0) {
                 if value.isPeriod {
-                    dateRow("시작일", selection: startBinding, range: ...startUpperBound)
+                    dateRow("시작", icon: "calendar", selection: startBinding, range: ...startUpperBound)
                     Divider().overlay(JournalTheme.glassBorder)
                     // 종료일은 시작일 이후만 고를 수 있습니다. 미래도 가능해서 진행 중인 회고를 쓸 수 있습니다.
-                    dateRow("종료일", selection: endBinding, range: endLowerBound...Date.distantFuture)
+                    dateRow("종료", icon: "calendar.badge.checkmark", selection: endBinding, range: endLowerBound...Date.distantFuture)
                 } else {
-                    dateRow("날짜", selection: startBinding, range: ...startUpperBound)
+                    dateRow("날짜", icon: "calendar", selection: startBinding, range: ...startUpperBound)
                 }
             }
             .padding(.horizontal, 16)
@@ -106,16 +107,38 @@ struct JournalPeriodPicker: View {
         }
     }
 
-    private func dateRow(_ title: String, selection: Binding<Date>, range: PartialRangeThrough<Date>) -> some View {
-        DatePicker(title, selection: selection, in: range, displayedComponents: .date)
-            .environment(\.locale, Locale(identifier: "ko_KR"))
-            .frame(minHeight: 44)
+    private func dateRow(
+        _ title: String, icon: String, selection: Binding<Date>, range: PartialRangeThrough<Date>
+    ) -> some View {
+        DatePicker(selection: selection, in: range, displayedComponents: .date) {
+            dateLabel(title, icon: icon)
+        }
+        .environment(\.locale, Locale(identifier: "ko_KR"))
+        .frame(minHeight: 44)
     }
 
-    private func dateRow(_ title: String, selection: Binding<Date>, range: ClosedRange<Date>) -> some View {
-        DatePicker(title, selection: selection, in: range, displayedComponents: .date)
-            .environment(\.locale, Locale(identifier: "ko_KR"))
-            .frame(minHeight: 44)
+    private func dateRow(
+        _ title: String, icon: String, selection: Binding<Date>, range: ClosedRange<Date>
+    ) -> some View {
+        DatePicker(selection: selection, in: range, displayedComponents: .date) {
+            dateLabel(title, icon: icon)
+        }
+        .environment(\.locale, Locale(identifier: "ko_KR"))
+        .frame(minHeight: 44)
+    }
+
+    private func dateLabel(_ title: String, icon: String) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: icon)
+                .foregroundStyle(JournalTheme.accent)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var periodBinding: Binding<Bool> {
+        Binding(get: { value.isPeriod }, set: setPeriod)
     }
 
     private var startBinding: Binding<Date> {

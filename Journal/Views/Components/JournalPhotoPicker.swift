@@ -21,43 +21,55 @@ struct JournalPhotoPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("사진")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(JournalTheme.subText)
+            Button { isPickerPresented = true } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "photo")
+                        .foregroundStyle(JournalTheme.accent)
+                        .frame(width: 28, height: 28)
+                        .background(JournalTheme.glassTint, in: RoundedRectangle(cornerRadius: 8))
+                        .accessibilityHidden(true)
+                    Text("사진")
+                        .foregroundStyle(JournalTheme.text)
+                    Spacer(minLength: 8)
+                    if isLoading {
+                        ProgressView()
+                            .accessibilityLabel("사진 불러오는 중")
+                    } else {
+                        Text(previewImage == nil ? "추가" : "교체")
+                            .foregroundStyle(JournalTheme.accent)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(JournalTheme.accent)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+                .fieldBackground()
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
+            .accessibilityLabel(previewImage == nil ? "사진 추가" : "사진 교체")
 
             if let previewImage {
                 Image(uiImage: previewImage)
                     .resizable()
                     .scaledToFill()
                     .frame(maxWidth: .infinity)
-                    .frame(height: 220)
+                    .frame(height: 156)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .overlay(RoundedRectangle(cornerRadius: 20).stroke(JournalTheme.glassBorder, lineWidth: 1))
-                    .overlay { if isLoading { ProgressView() } }
                     .accessibilityLabel("선택한 사진")
 
-                HStack(spacing: 8) {
-                    JournalChip(title: "사진 교체") { isPickerPresented = true }
-                        .disabled(isLoading)
-                    JournalChip(title: "제거", trailingSystemImage: "xmark") { photoData = nil }
-                        .disabled(isLoading)
-                }
-            } else {
-                Button { isPickerPresented = true } label: {
-                    HStack(spacing: 10) {
-                        if isLoading {
-                            ProgressView()
-                        } else {
-                            Image(systemName: "photo.on.rectangle")
-                        }
-                        Text(isLoading ? "불러오는 중" : "사진 추가")
-                        Spacer()
-                    }
-                    .foregroundStyle(JournalTheme.chipText)
-                    .fieldStyle()
-                }
-                .buttonStyle(.plain)
-                .disabled(isLoading)
+                Button("사진 제거", systemImage: "xmark") { photoData = nil }
+                    .font(.subheadline)
+                    .foregroundStyle(JournalTheme.accent)
+                    .frame(minHeight: 44)
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .disabled(isLoading)
             }
         }
         // 사진만 고르게 하고 영상은 보이지 않게 합니다.
