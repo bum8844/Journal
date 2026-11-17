@@ -45,11 +45,20 @@ struct JournalDetailView: View {
                             .foregroundStyle(JournalTheme.accent)
                     }
 
-                    Text(journal.createdAt.koreanDateString)
+                    Text(journal.displayDateString)
                         .font(.subheadline)
                         .foregroundStyle(JournalTheme.subText)
 
                     Divider()
+
+                    if let photoData = journal.photoData, let image = UIImage(data: photoData) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .accessibilityLabel("첨부한 사진")
+                    }
 
                     Text(journal.content)
                         .font(.body)
