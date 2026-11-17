@@ -1,49 +1,41 @@
 import Foundation
 
-/// 공통 모델의 회고 형식(free, kpt, fourL). 작성 화면에서 쓰기 편하도록 짧은 이름을 붙입니다.
+/// 공통 모델의 회고 형식(free, tomorrow, fourL). 작성 화면에서 쓰기 편하도록 짧은 이름을 붙입니다.
 typealias ReflectionFormat = JournalDatabase.ReflectionFormat
 
-/// 작성 화면에서 형식을 보여 주는 방법(이름, 설명, 질문)을 정의합니다.
+/// 작성 화면에서 형식을 보여 주는 방법(이름, 질문)을 정의합니다.
 /// 모델 파일은 건드리지 않고 확장으로만 더합니다.
 extension JournalDatabase.ReflectionFormat {
-    /// 형식 선택 막대에 보이는 순서 (시안 기준)
-    static let displayOrder: [ReflectionFormat] = [.kpt, .fourL, .free]
+    /// 형식 선택 탭에 보이는 순서 (시안 기준: 오늘의 경험, 내일을 위한 정리, 자유)
+    static let displayOrder: [ReflectionFormat] = [.fourL, .tomorrow, .free]
 
+    /// 형식 선택 탭에 보이는 이름
     var title: String {
         switch self {
-        case .kpt: "KPT"
-        case .fourL: "4L"
+        case .fourL: "오늘의 경험"
+        case .tomorrow: "내일을 위한 정리"
         case .free: "자유"
-        }
-    }
-
-    /// 형식 설명 박스 문구. 자유 형식은 설명이 없어 nil입니다.
-    var guide: String? {
-        switch self {
-        case .kpt:
-            "KPT는 Keep, Problem, Try 세 가지 질문으로 돌아보는 회고예요. 계속할 것과 문제점, 시도할 것을 정리할 때 좋아요."
-        case .fourL:
-            "4L은 L로 시작하는 네 가지 질문으로 돌아보는 회고예요. 감정과 배움을 함께 정리할 때 좋아요."
-        case .free:
-            nil
         }
     }
 
     /// 형식에 속한 질문. 자유 형식은 질문 없이 본문 한 칸을 씁니다.
     var questions: [JournalQuestion] {
         switch self {
-        case .kpt:
-            [
-                JournalQuestion(initial: "K", english: "Keep", korean: "계속할 것", placeholder: "계속하고 싶은 것은?"),
-                JournalQuestion(initial: "P", english: "Problem", korean: "문제점", placeholder: "문제였던 부분은?"),
-                JournalQuestion(initial: "T", english: "Try", korean: "시도할 것", placeholder: "다음에 시도해 볼 것은?")
-            ]
         case .fourL:
+            // 질문 이름(key)은 제목과 같습니다. 제목을 바꾸면 이미 저장된 답변과 연결이 끊기니 주의하세요.
             [
-                JournalQuestion(initial: "L", english: "Liked", korean: "좋았던 것", placeholder: "좋았던 점은 무엇인가요?"),
-                JournalQuestion(initial: "L", english: "Learned", korean: "배운 것", placeholder: "새로 배운 것은?"),
-                JournalQuestion(initial: "L", english: "Lacked", korean: "부족했던 것", placeholder: "더 연습이 필요한 부분은?"),
-                JournalQuestion(initial: "L", english: "Longed for", korean: "바랐던 것", placeholder: "있었으면 좋았을 것은?")
+                JournalQuestion(key: "좋았던 점", title: "좋았던 점", legacyKey: "Liked", placeholder: "오늘 어떤 순간에 기분이 좋았나요?"),
+                JournalQuestion(key: "배운 점", title: "배운 점", legacyKey: "Learned", placeholder: "새롭게 알게 되거나 깨달은 게 있나요?"),
+                JournalQuestion(key: "아쉬웠던 점", title: "아쉬웠던 점", legacyKey: "Lacked", placeholder: "조금 아쉽게 느껴진 순간이 있었나요?"),
+                JournalQuestion(key: "바라는 점", title: "바라는 점", legacyKey: "Longed for", placeholder: "앞으로 어떤 순간이 더 많아지면 좋을까요?")
+            ]
+        case .tomorrow:
+            // 시안의 질문은 임시 문구입니다. 확정되면 이 세 줄만 바꾸면 됩니다.
+            // 질문 이름(key)은 제목과 같습니다. 제목을 바꾸면 이미 저장된 답변과 연결이 끊기니 주의하세요.
+            [
+                JournalQuestion(key: "내일 해볼 한 가지", title: "내일 해볼 한 가지", legacyKey: "Try", placeholder: "내일 가장 먼저 해보고 싶은 건 뭔가요?"),
+                JournalQuestion(key: "미리 챙길 것", title: "미리 챙길 것", legacyKey: "Problem", placeholder: "내일을 위해 준비하면 좋은 게 있나요?"),
+                JournalQuestion(key: "내일의 나에게", title: "내일의 나에게", legacyKey: "Keep", placeholder: "내일의 나에게 한마디 남겨볼까요?")
             ]
         case .free:
             []
@@ -53,12 +45,14 @@ extension JournalDatabase.ReflectionFormat {
 
 /// 질문 한 줄의 표시 정보
 struct JournalQuestion: Identifiable {
-    /// 아이콘에 쓰는 한 글자 (K, P, T, L)
-    let initial: String
-    let english: String
-    let korean: String
+    /// 모델의 ReflectionAnswer.question에 저장하는 값. 이미 저장된 글과 연결되므로 함부로 바꾸지 않습니다.
+    let key: String
+    /// 작성 화면 질문 카드의 굵은 제목. 목록·상세의 본문(content)에도 질문 이름으로 들어갑니다.
+    let title: String
+    /// 이전 KPT·4L 회고에 저장된 질문 이름.
+    let legacyKey: String
+    /// 제목 아래에 흐리게 보이는 안내 문구. 입력을 시작하면 사라집니다.
     let placeholder: String
 
-    /// 모델의 ReflectionAnswer.question에 저장하는 값
-    var id: String { english }
+    var id: String { key }
 }

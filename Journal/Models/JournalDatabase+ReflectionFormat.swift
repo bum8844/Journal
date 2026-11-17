@@ -11,7 +11,24 @@ import Foundation
 // 이 확장에는 값을 저장하는 필드를 두지 않는다. 저장 필드(format, answers 등)는
 // 확장에 둘 수 없어서 JournalDatabase.swift의 클래스 본문에 있다.
 extension JournalDatabase {
-    enum ReflectionFormat: String, Codable, CaseIterable { case free, kpt, fourL }
+    enum ReflectionFormat: String, Codable, CaseIterable {
+        case free
+        // 기존 회고의 저장값과 호환되도록 UI 이름만 바꾼다.
+        case tomorrow = "kpt"
+        case fourL
+
+        init(from decoder: Decoder) throws {
+            let value = try decoder.singleValueContainer()
+            let name = try value.decode(String.self)
+            if name == "tomorrow" {
+                self = .tomorrow
+            } else if let format = Self(rawValue: name) {
+                self = format
+            } else {
+                throw DecodingError.dataCorruptedError(in: value, debugDescription: "Unknown reflection format: \(name)")
+            }
+        }
+    }
 
     /// 형식 필드가 추가되기 전에 저장된 회고는 자유 형식으로 열린다.
     var effectiveFormat: ReflectionFormat { format ?? .free }

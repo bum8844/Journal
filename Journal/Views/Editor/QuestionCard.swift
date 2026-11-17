@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// KPT·4L의 질문 목록을 한 카드에 담아 질문마다 입력칸을 보여 줍니다.
+/// 오늘의 경험·내일을 위한 정리의 질문 목록을 한 카드에 담아 질문마다 입력칸을 보여 줍니다.
 /// 답변은 질문 순서대로 answers 배열에 들어갑니다.
 struct QuestionCard: View {
     let questions: [JournalQuestion]
@@ -10,9 +10,11 @@ struct QuestionCard: View {
         VStack(spacing: 0) {
             ForEach(Array(questions.enumerated()), id: \.element.id) { index, question in
                 if index > 0 {
-                    Divider().overlay(JournalTheme.glassBorder)
+                    Divider()
+                        .overlay(JournalTheme.glassBorder)
+                        .padding(.leading, 40)
                 }
-                QuestionRow(question: question, answer: answerBinding(at: index))
+                QuestionRow(number: index + 1, question: question, answer: answerBinding(at: index))
             }
         }
         .padding(.horizontal, 16)
@@ -31,27 +33,34 @@ struct QuestionCard: View {
     }
 }
 
-/// 아이콘 + "영어 · 한글" 질문명 + 답변 입력칸 한 줄
+/// 번호 배지 + 굵은 질문 제목 + 답변 입력칸(안내 문구가 흐리게 들어 있음) 한 줄
 private struct QuestionRow: View {
+    let number: Int
     let question: JournalQuestion
     @Binding var answer: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Text(question.initial)
-                .font(.subheadline.weight(.bold))
+            Text(String(format: "%02d", number))
+                .font(.caption.weight(.bold))
+                .monospacedDigit()
                 .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
-                .background(JournalTheme.accent, in: RoundedRectangle(cornerRadius: 10))
+                .frame(width: 28, height: 28)
+                .background(JournalTheme.accent, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Text(question.english).fontWeight(.semibold)
-                    Text("· \(question.korean)").foregroundStyle(JournalTheme.subText)
-                }
+                Text(question.title)
+                    .font(.headline)
 
-                TextField(question.placeholder, text: $answer, axis: .vertical)
-                    .lineLimit(1...6)
+                TextField(
+                    question.title,
+                    text: $answer,
+                    prompt: Text(question.placeholder).foregroundStyle(JournalTheme.subText),
+                    axis: .vertical
+                )
+                .font(.subheadline)
+                .lineLimit(1...6)
             }
         }
         .padding(.vertical, 12)

@@ -9,12 +9,12 @@ import SwiftUI
 import SwiftData
 
 struct JournalEditorView: View {
-    
+
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    
+
     let journal: JournalDatabase?
-    
+
     @State var title: String = ""
     @State var category: String = ""
     @State var tags: [String] = []
@@ -29,7 +29,7 @@ struct JournalEditorView: View {
     @State var photoData: Data?
     // 중요도. 새 글과 값이 없던 기존 글은 2단계(보통)입니다.
     @State var importance: ReflectionImportance
-    
+
     @State var showingSaveError:Bool = false
     // 저장하는 동안(알림 권한 요청 포함) 저장 버튼을 막아 같은 글이 두 번 저장되지 않게 합니다.
     @State private var isSaving = false
@@ -38,23 +38,20 @@ struct JournalEditorView: View {
     @State private var aiCommentInput: ReflectionCommentInput?
     @State private var aiCommentError: String?
     @State private var aiCommentTask: Task<Void, Never>?
-    
+
     init(journal: JournalDatabase? = nil) {
         self.journal = journal
         _title = State(initialValue: journal?.title ?? "")
         _category = State(initialValue: journal?.category ?? "")
         _tags = State(initialValue: journal?.tags ?? [])
         _content = State(initialValue: journal?.content ?? "")
-        
+
         // 편집이면 저장된 형식·답변·기간·사진을 그대로 채웁니다.
         let savedFormat = journal?.effectiveFormat ?? .free
         _format = State(initialValue: savedFormat)
-        if let journal {
-            // 저장된 답변을 질문 순서에 맞춰 펼칩니다. 답이 없는 질문은 빈 칸입니다.
-            let texts = savedFormat.questions.map { question in
-                journal.answers.first { $0.question == question.english }?.text ?? ""
-            }
-            _answersByFormat = State(initialValue: [savedFormat: texts])
+        let savedAnswers = journal.map { Self.savedAnswers(in: $0, format: savedFormat) } ?? []
+        if journal != nil {
+            _answersByFormat = State(initialValue: [savedFormat: savedAnswers])
         }
         // 날짜가 없는 기존 글은 최초 작성일을 보여 줍니다.
         _period = State(initialValue: JournalPeriodValue(
@@ -67,65 +64,79 @@ struct JournalEditorView: View {
         if let journal, let comment = journal.aiComment {
             _aiComment = State(initialValue: comment)
             _aiCommentInput = State(initialValue: ReflectionCommentInput(
-                format: savedFormat.title, title: journal.title, body: journal.content
+                format: savedFormat.title,
+                title: journal.title,
+                body: savedFormat == .free ? journal.content : Self.composeContent(format: savedFormat, answers: savedAnswers)
             ))
         }
     }
-    
+
     // 추천 목록에 쓰기 위해 이미 저장된 회고를 읽는다
     @Query private var allJournals: [JournalDatabase]
-    
+
     private let defaultCategories = ["업무", "공부", "운동", "관계"]
     private let labelColor = JournalTheme.subText
-    
+
     /// 기본 카테고리 + 이미 쓴 카테고리 (중복 없이, 처음 나온 순서 유지)
     private var categorySuggestions: [String] {
         let existing = allJournals.map(\.category).filter { !$0.isEmpty }
         var seen = Set<String>()
         return (defaultCategories + existing).filter { seen.insert($0).inserted }
     }
-    
+
     /// 이미 쓴 태그 (중복 없이, 처음 나온 순서 유지)
     private var tagSuggestions: [String] {
         var seen = Set<String>()
         return allJournals.flatMap(\.tags).filter { seen.insert($0).inserted }
     }
-    
+
     /// 현재 형식의 답변. 질문 수보다 짧으면 빈 칸으로 채워 돌려줍니다.
     private var answers: [String] {
         let saved = answersByFormat[format] ?? []
         let count = format.questions.count
         return saved + Array(repeating: "", count: max(0, count - saved.count))
     }
-    
+
     private var answersBinding: Binding<[String]> {
         Binding(
             get: { answers },
             set: { answersByFormat[format] = $0 }
         )
     }
-    
+
     private var hasBody: Bool {
         if format == .free {
             return !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         }
         return answers.contains { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
-    
+
     var isValid: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && hasBody && period.isValid
     }
-    
-    /// KPT·4L 답변을 목록·검색·상세가 그대로 읽을 수 있도록 content 한 덩어리로 만듭니다.
+
+    /// 오늘의 경험·내일을 위한 정리 답변을 목록·검색·상세가 그대로 읽을 수 있도록 content 한 덩어리로 만듭니다.
     private var composedContent: String {
+        Self.composeContent(format: format, answers: answers)
+    }
+
+    private static func savedAnswers(in journal: JournalDatabase, format: ReflectionFormat) -> [String] {
+        format.questions.map { question in
+            journal.answers.first { $0.question == question.key }?.text
+                ?? journal.answers.first { $0.question == question.legacyKey }?.text
+                ?? ""
+        }
+    }
+
+    private static func composeContent(format: ReflectionFormat, answers: [String]) -> String {
         zip(format.questions, answers)
             .compactMap { question, answer -> String? in
                 let text = answer.trimmingCharacters(in: .whitespacesAndNewlines)
-                return text.isEmpty ? nil : "\(question.english) · \(question.korean)\n\(text)"
+                return text.isEmpty ? nil : "\(question.title)\n\(text)"
             }
             .joined(separator: "\n\n")
     }
-    
+
     private var commentInput: ReflectionCommentInput {
         ReflectionCommentInput(format: format.title, title: title, body: format == .free ? content : composedContent)
     }
@@ -137,36 +148,32 @@ struct JournalEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Picker("작성 형식", selection: $format) {
-                    ForEach(ReflectionFormat.displayOrder, id: \.self) { option in
-                        Text(option.title).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-                
-                if let guide = format.guide {
-                    FormatGuideBanner(text: guide)
-                }
-                
+                FormatTabBar(selection: $format)
+
+                FormatGuideBanner(
+                    title: "나의 하루 돌아보기",
+                    text: "잠깐 멈춰, 오늘의 나를 만나보세요.\n한 줄씩만 적어도 충분해요."
+                )
+
                 section("제목") {
                     TextField("오늘의 마이로그", text: $title)
                         .fieldStyle()
                 }
-                
+
                 if format == .free {
                     freeContentSection
                 } else {
                     QuestionCard(questions: format.questions, answers: answersBinding)
                 }
-                
+
                 aiCommentSection
 
                 JournalPeriodPicker(value: $period)
-                
+
                 JournalImportancePicker(importance: $importance, isPeriod: period.isPeriod)
-                
+
                 JournalPhotoPicker(photoData: $photoData)
-                
+
                 JournalClassificationPicker(
                     category: $category,
                     tags: $tags,
@@ -174,6 +181,12 @@ struct JournalEditorView: View {
                     categorySuggestions: categorySuggestions,
                     tagSuggestions: tagSuggestions
                 )
+
+                Text("완벽하지 않아도 괜찮은, 나의 기록")
+                    .font(.subheadline)
+                    .foregroundStyle(labelColor)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -193,6 +206,8 @@ struct JournalEditorView: View {
                 Button("저장"){
                     save()
                 }
+                .fontWeight(.semibold)
+                .buttonStyle(.borderedProminent)
                 .disabled(!isValid || isSaving)
             }
         }
@@ -207,26 +222,28 @@ struct JournalEditorView: View {
         }
         .alert("저장하지 못했습니다.", isPresented: $showingSaveError) {
             Button("확인", role: .cancel) {
-                
+
             }
         } message: {
             Text("입력한 내용은 그대로 유지됩니다. 잠시 후 다시 저장해 주세요")
         }
     }
-    
-    /// 자유 형식의 본문 입력칸
+
+    /// 자유 형식: 오늘의 질문 카드 + 큰 본문 입력칸
     private var freeContentSection: some View {
-        section("본문") {
+        VStack(alignment: .leading, spacing: 12) {
+            TodayQuestionCard()
+
             TextEditor(text: $content)
                 .scrollContentBackground(.hidden)
-                .frame(height: 140)
+                .frame(minHeight: 260)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .fieldBackground()
                 .overlay(alignment: .topLeading) {
                     if content.isEmpty {
-                        Text("오늘 있었던 일과 느낀 점을 적어 보세요.")
-                            .foregroundStyle(labelColor.opacity(0.7))
+                        Text("오늘 하루를 자유롭게 적어보세요")
+                            .foregroundStyle(labelColor.opacity(0.8))
                             .padding(.horizontal, 17)
                             .padding(.vertical, 16)
                             .allowsHitTesting(false)
@@ -234,7 +251,7 @@ struct JournalEditorView: View {
                 }
         }
     }
-    
+
     private var aiCommentSection: some View {
         section("AI 한마디") {
             if let currentAIComment {
@@ -281,24 +298,26 @@ struct JournalEditorView: View {
     func save() {
         guard isValid, !isSaving else { return }
         isSaving = true
-        
+
         // 입력창에 쓰다 만 태그도 저장에 포함한다
         tags = JournalDatabase.tags(tags, adding: tagInput)
         tagInput = ""
-        
+
         let target = journal ?? JournalDatabase(title: "", content: "", category: "", tags: [])
-        
+
         target.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         target.category = JournalDatabase.normalizedCategory(category) ?? ""
         target.tags = tags
+        let originalFormat = journal?.effectiveFormat
+        let originalAnswers = journal.map { Self.savedAnswers(in: $0, format: format) }
         target.format = format
         if format == .free {
             target.content = content.trimmingCharacters(in: .whitespacesAndNewlines)
             target.answers = []
-        } else {
+        } else if journal == nil || originalFormat != format || originalAnswers != answers {
             target.content = composedContent
             target.answers = zip(format.questions, answers).map {
-                JournalDatabase.ReflectionAnswer(question: $0.english, text: $1.trimmingCharacters(in: .whitespacesAndNewlines))
+                JournalDatabase.ReflectionAnswer(question: $0.key, text: $1.trimmingCharacters(in: .whitespacesAndNewlines))
             }
         }
         // 날짜 규칙: 하루는 startDate가 선택일이고 endDate는 비운다. 기간은 startDate~endDate다.
@@ -308,12 +327,12 @@ struct JournalEditorView: View {
         target.photoData = photoData
         target.importance = importance
         target.aiComment = currentAIComment
-        
+
         if journal == nil {
             modelContext.insert(target)
         }
-        
-        
+
+
         do {
             try modelContext.save()
             scheduleReminderAndClose(for: target)
@@ -368,8 +387,8 @@ private extension JournalEditorView {
 // - 위치 행은 만들지 않았다.
 //
 // [작성 형식]
-// - 자유는 본문 한 칸, KPT·4L은 질문별 입력칸이다. 형식마다 답변을 따로 들고 있다가 선택한 형식의 답변만 저장한다.
-// - KPT·4L 답변은 answers(질문 이름 + 답변)에 저장하고, 목록·검색·상세가 그대로 읽도록 content에도 합쳐서 넣는다.
+// - 자유는 본문 한 칸, 오늘의 경험·내일을 위한 정리은 질문별 입력칸이다. 형식마다 답변을 따로 들고 있다가 선택한 형식의 답변만 저장한다.
+// - 오늘의 경험·내일을 위한 정리 답변은 answers(질문 이름 + 답변)에 저장하고, 목록·검색·상세가 그대로 읽도록 content에도 합쳐서 넣는다.
 //
 // [C 파트와의 연결]
 // - 카테고리/태그 입력은 C의 JournalClassificationPicker를 쓴다. 태그는 [String] 배열 그대로 저장한다.

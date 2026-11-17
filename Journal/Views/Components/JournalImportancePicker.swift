@@ -23,7 +23,7 @@ struct JournalImportancePicker: View {
             .pickerStyle(.segmented)
 
             if isPeriod && importance == .high {
-                FormatGuideBanner(text: reminderMode.guide)
+                FormatGuideBanner(title: "기간 종료 알림", text: reminderMode.guide)
             }
         }
     }

@@ -23,8 +23,8 @@ git merge origin/main
 
 | 필드 | 타입 | 기본값 | 의미 |
 | --- | --- | --- | --- |
-| `format` | `ReflectionFormat` (`free`, `kpt`, `fourL`) | `.free` | 회고 형식 |
-| `answers` | `[ReflectionAnswer]` (`question`, `text`) | `[]` | 질문별 답변 (KPT, 4L일 때 사용) |
+| `format` | `ReflectionFormat` (`free`, `tomorrow`, `fourL`) | `.free` | 회고 형식 |
+| `answers` | `[ReflectionAnswer]` (`question`, `text`) | `[]` | 질문별 답변 (`tomorrow`, `fourL`일 때 사용) |
 | `isPeriod` | `Bool` | `false` | `false`는 하루 회고, `true`는 기간 회고 |
 | `startDate` | `Date?` | `nil` | 기간 시작일. 하루 회고는 선택한 날짜. 기존 글은 `nil` |
 | `endDate` | `Date?` | `nil` | 기간 종료일. 하루 회고는 `nil` |
@@ -52,7 +52,7 @@ git merge origin/main
 
 | 역할 | 확인할 점 |
 | --- | --- |
-| 작성·편집 | KPT, 4L은 본문 대신 답변에 내용이 들어갈 수 있어서, 현재의 "제목 또는 본문이 비면 저장 불가" 조건을 형식에 맞게 조정해야 합니다. |
+| 작성·편집 | `tomorrow`, `fourL`은 본문 대신 답변에 내용이 들어갈 수 있어서, 현재의 "제목 또는 본문이 비면 저장 불가" 조건을 형식에 맞게 조정해야 합니다. |
 | 목록·상세 | 키워드 검색 범위(제목, 본문, 카테고리, 태그)에 답변을 넣을지 정해 주세요. |
 | 기간·사진 입력 | `JournalPeriodPicker`, `JournalPhotoPicker`를 작성폼에 연결했습니다(작성·편집 화면 반영). 종료일이 시작일보다 빠르거나 시작일이 오늘 이후일 때의 저장 방지는 `JournalPeriodValue.isValid`가 맡습니다. |
 | 통계 | 변경 없음. `createdAt`과 `tags`를 그대로 사용합니다. |
