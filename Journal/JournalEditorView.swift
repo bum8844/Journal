@@ -43,7 +43,7 @@ struct JournalEditorView: View {
         _content = State(initialValue: journal?.content ?? "")
         
         // 편집이면 저장된 형식·답변·기간·사진을 그대로 채웁니다.
-        let savedFormat = journal?.format ?? .free
+        let savedFormat = journal?.effectiveFormat ?? .free
         _format = State(initialValue: savedFormat)
         if let journal {
             // 저장된 답변을 질문 순서에 맞춰 펼칩니다. 답이 없는 질문은 빈 칸입니다.

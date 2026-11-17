@@ -18,11 +18,11 @@ final class JournalDatabase: Identifiable {
     var category: String
     var tags: [String]
     
-    // 시안 B에서 추가한 필드. 모두 기본값 또는 선택값이라 기존 글은
-    // "자유 형식, 하루 회고, 사진 없음"으로 열린다.
+    // 시안 B 이전 회고에는 format 값이 없으므로 옵셔널로 읽는다.
+    // 새 회고는 생성 시 형식을 저장하고, 기존 회고의 빈 값은 effectiveFormat에서 자유 형식으로 처리한다.
     // 저장 프로퍼티는 확장(extension)에 둘 수 없어서 클래스 본문에 둔다.
     // 타입 정의(ReflectionFormat, ReflectionAnswer)는 JournalDatabase+ReflectionFormat.swift에 있다.
-    var format: ReflectionFormat = ReflectionFormat.free   // 회고 형식 (자유 / KPT / 4L)
+    var format: ReflectionFormat?                          // 회고 형식 (자유 / KPT / 4L)
     var answers: [ReflectionAnswer] = []                   // 질문별 답변 (KPT, 4L일 때 사용)
     var isPeriod: Bool = false                             // false = 하루 회고, true = 기간 회고
     var startDate: Date?                                   // 기간 시작일

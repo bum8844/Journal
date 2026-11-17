@@ -12,6 +12,9 @@ import Foundation
 // 확장에 둘 수 없어서 JournalDatabase.swift의 클래스 본문에 있다.
 extension JournalDatabase {
     enum ReflectionFormat: String, Codable, CaseIterable { case free, kpt, fourL }
+
+    /// 형식 필드가 추가되기 전에 저장된 회고는 자유 형식으로 열린다.
+    var effectiveFormat: ReflectionFormat { format ?? .free }
     
     struct ReflectionAnswer: Codable, Hashable {
         var question: String   // 예: "Keep"
