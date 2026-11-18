@@ -94,10 +94,6 @@ struct ThemeSettingsView: View {
             }
             .listRowBackground(JournalTheme.glassFill)
 #endif
-
-#if DEBUG
-            DebugToolsSection()
-#endif
         }
         // 팀 공통 테마: 시스템 폼 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
         .scrollContentBackground(.hidden)
