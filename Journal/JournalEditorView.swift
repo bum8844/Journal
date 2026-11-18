@@ -267,9 +267,16 @@ struct JournalEditorView: View {
                 ProgressView("AI 한마디를 만드는 중…")
                     .font(.footnote)
             } else {
-                Button(currentAIComment == nil ? "AI 한마디 생성" : "다시 생성", systemImage: "sparkles") {
+                Button {
                     generateAIComment()
+                } label: {
+                    Label(currentAIComment == nil ? "AI 한마디 생성" : "다시 생성", systemImage: "sparkles")
+                        .font(.body.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(JournalTheme.accent)
+                .buttonBorderShape(.roundedRectangle(radius: 16))
                 .disabled(!commentInput.canGenerate || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
             }
         }
