@@ -65,7 +65,11 @@ struct JournalListView: View {
 
                 VStack(alignment: .leading, spacing: 14) {
                     header
-                    cardList
+                    if journals.isEmpty {
+                        emptyState
+                    } else {
+                        cardList
+                    }
                 }
                 .padding(.top, 8)
             }
@@ -132,6 +136,25 @@ struct JournalListView: View {
         }
         .padding(.horizontal, 20)
         .animation(.easeInOut(duration: 0.2), value: isSearchFocused)
+    }
+
+    /// 저장된 회고가 하나도 없을 때 보여 주는 안내 화면
+    private var emptyState: some View {
+        ContentUnavailableView {
+            Label("아직 회고가 없어요", systemImage: "book.closed")
+        } description: {
+            Text("첫 회고를 남겨 보세요")
+        } actions: {
+            Button("회고 추가하기") {
+                onAdd()
+                isAddingNew = true
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(JournalTheme.accent)
+            // 아래 전체 글자색(.foregroundStyle)이 버튼 글자까지 바꾸므로, 버튼은 흰색으로 다시 지정한다
+            .foregroundStyle(.white)
+        }
+        .foregroundStyle(JournalTheme.text)
     }
 
     private var cardList: some View {
