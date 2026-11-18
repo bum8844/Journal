@@ -15,6 +15,10 @@ enum JournalTheme {
     static let glassBorder = Color("ThemeGlassBorder")
     static let glassShadow = Color("ThemeGlassShadow")
 
+    // 목록 카드의 중요도 점 색 (높음: 분홍, 보통: 보라(accent), 낮음: 연보라)
+    static let importanceHigh = Color("ThemeImportanceHigh")
+    static let importanceLow = Color("ThemeImportanceLow")
+
     /// 라이트: 라벤더 → 핑크 → 피치. 다크: 짙은 남보라 → 자주 → 와인
     static let background = LinearGradient(
         gradient: Gradient(stops: [

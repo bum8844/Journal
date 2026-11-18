@@ -23,11 +23,11 @@ git merge origin/main
 
 | 필드 | 타입 | 기본값 | 의미 |
 | --- | --- | --- | --- |
-| `format` | `ReflectionFormat` (`free`, `kpt`, `fourL`) | `.free` | 회고 형식 |
-| `answers` | `[ReflectionAnswer]` (`question`, `text`) | `[]` | 질문별 답변 (KPT, 4L일 때 사용) |
+| `format` | `ReflectionFormat` (`free`, `tomorrow`, `fourL`) | `.free` | 회고 형식 |
+| `answers` | `[ReflectionAnswer]` (`question`, `text`) | `[]` | 질문별 답변 (`tomorrow`, `fourL`일 때 사용) |
 | `isPeriod` | `Bool` | `false` | `false`는 하루 회고, `true`는 기간 회고 |
-| `startDate` | `Date?` | `nil` | 기간 시작일 |
-| `endDate` | `Date?` | `nil` | 기간 종료일 |
+| `startDate` | `Date?` | `nil` | 기간 시작일. 하루 회고는 선택한 날짜. 기존 글은 `nil` |
+| `endDate` | `Date?` | `nil` | 기간 종료일. 하루 회고는 `nil` |
 | `photoData` | `Data?` (`@Attribute(.externalStorage)`) | `nil` | 사진 한 장. 공식 문서 기준으로 모델 저장소 옆의 별도 이진 데이터로 저장됩니다. |
 
 `ReflectionFormat`과 `ReflectionAnswer`의 타입 정의는 `Journal/Models/JournalDatabase+ReflectionFormat.swift`에 있습니다. 코드에서는 `JournalDatabase.ReflectionFormat`, `JournalDatabase.ReflectionAnswer`로 씁니다.
@@ -36,16 +36,25 @@ git merge origin/main
 
 - 기존 필드(`title`, `content`, `createdAt`, `category`, `tags`)의 이름과 타입은 바뀌지 않았습니다.
 - 기존 `JournalDatabase(title:content:category:tags:)` 호출은 수정 없이 그대로 동작합니다. 새 매개변수는 모두 기본값이 있고 뒤에 붙어 있습니다.
-- `createdAt`은 기간 용도가 아닙니다. 주·월별 통계는 그대로 `createdAt`을 쓰고, 기간은 `startDate`, `endDate`를 씁니다.
+- `createdAt`은 기간 용도가 아닙니다. 주·월별 통계는 지금은 `createdAt`을 쓰고, 기간은 `startDate`, `endDate`를 씁니다.
 - 새 저장 필드는 클래스 본문에만 추가할 수 있습니다. 확장(extension)에는 저장 프로퍼티를 넣을 수 없습니다(Swift 규칙).
+
+## 날짜 규칙
+
+- **하루 회고**: `isPeriod`가 `false`이고, `startDate`가 선택한 날짜, `endDate`는 `nil`입니다.
+- **기간 회고**: `isPeriod`가 `true`이고, `startDate`부터 `endDate`까지입니다.
+- **날짜가 없는 기존 글**: `startDate`가 `nil`입니다. 화면에서는 `createdAt`을 날짜로 보여 줍니다.
+- 이 규칙을 한 곳에서 계산하도록 모델에 `reviewDate`(`startDate ?? createdAt`)를 두었습니다. 날짜를 표시하거나 정렬, 집계할 때 각자 계산하지 말고 이 값을 써 주세요.
+- 입력은 `JournalPeriodValue`, `JournalPeriodPicker`로 받고, 저장은 `isPeriod`, `startDate`, `period.savedEndDate`를 그대로 옮깁니다. (작성·편집 화면에 반영됨)
+- 목록 정렬과 통계가 `createdAt`에서 `reviewDate`로 바뀌는지는 아직 정해지지 않았습니다. 정해지기 전까지는 지금처럼 `createdAt`을 씁니다.
 
 ## 역할별로 확인할 점
 
 | 역할 | 확인할 점 |
 | --- | --- |
-| 작성·편집 | KPT, 4L은 본문 대신 답변에 내용이 들어갈 수 있어서, 현재의 "제목 또는 본문이 비면 저장 불가" 조건을 형식에 맞게 조정해야 합니다. |
+| 작성·편집 | `tomorrow`, `fourL`은 본문 대신 답변에 내용이 들어갈 수 있어서, 현재의 "제목 또는 본문이 비면 저장 불가" 조건을 형식에 맞게 조정해야 합니다. |
 | 목록·상세 | 키워드 검색 범위(제목, 본문, 카테고리, 태그)에 답변을 넣을지 정해 주세요. |
-| 기간·사진 입력 | `isPeriod`, `startDate`, `endDate`, `photoData`에 값을 채워 작성폼에 전달해 주세요. 종료일이 시작일보다 빠를 때의 저장 방지도 이 역할이 맡습니다. |
+| 기간·사진 입력 | `JournalPeriodPicker`, `JournalPhotoPicker`를 작성폼에 연결했습니다(작성·편집 화면 반영). 종료일이 시작일보다 빠르거나 시작일이 오늘 이후일 때의 저장 방지는 `JournalPeriodValue.isValid`가 맡습니다. |
 | 통계 | 변경 없음. `createdAt`과 `tags`를 그대로 사용합니다. |
 | 공통 모델·필터 | 기존 글과 새 글이 카테고리·태그 필터로 모두 찾아지는지 확인합니다. |
 
