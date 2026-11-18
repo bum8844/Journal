@@ -23,6 +23,10 @@ struct JournalListView: View {
     @State private var selectedJournal: JournalDatabase?
     // + 버튼을 누르면 새 회고 작성 화면으로 이동한다
     @State private var isAddingNew = false
+    // 삭제를 저장하지 못했을 때 알려 주는 얼럿
+    @State private var isShowingDeleteError = false
+    // 알림을 누르면 해당 회고를 열기 위해 알림 담당이 전달해 주는 값
+    private let router = NotificationRouter.shared
     @FocusState private var isSearchFocused: Bool
 
     // MARK: - 필터 후보 (목록에 있는 값에서 중복 없이 뽑는다)
@@ -72,6 +76,9 @@ struct JournalListView: View {
             .navigationDestination(isPresented: $isAddingNew) {
                 JournalEditorView()
             }
+            // 알림을 누르면 해당 회고의 상세 화면을 연다 (앱이 꺼져 있다가 켜진 경우도 포함)
+            .onChange(of: router.pendingJournalID, initial: true) { openPendingJournalIfNeeded() }
+            .onChange(of: journals.count) { openPendingJournalIfNeeded() }
             // 삭제로 사라진 카테고리/태그가 선택된 채로 남지 않게 해제한다
             .onChange(of: categories) {
                 if let selectedCategory, !categories.contains(selectedCategory) {
@@ -80,6 +87,9 @@ struct JournalListView: View {
             }
             .onChange(of: tags) {
                 selectedTags.formIntersection(tags)
+            }
+            .alert(JournalDeletion.failureMessage, isPresented: $isShowingDeleteError) {
+                Button("확인", role: .cancel) {}
             }
         }
     }
@@ -175,9 +185,34 @@ struct JournalListView: View {
 private extension JournalListView {
     /// 저장소에서 회고를 지우고 바로 저장한다 (앱을 다시 켜도 삭제된 상태 유지)
     func delete(_ journal: JournalDatabase) {
+        let journalID = journal.id
+        var isDeleted = false
         withAnimation {
-            modelContext.delete(journal)
-            try? modelContext.save()
+            isDeleted = JournalDeletion.delete(journal, in: modelContext)
+        }
+        guard isDeleted else {
+            // 저장하지 못해 회고를 되돌렸다. 회고가 그대로 있으니 기존 알림 예약도 건드리지 않는다
+            isShowingDeleteError = true
+            return
+        }
+        // 삭제 저장이 성공한 뒤에만 종료 알림을 정리한다
+        Task { _ = await PeriodReminderScheduler.shared.reconcile(journalID: journalID, in: modelContext) }
+    }
+}
+
+// MARK: - 알림으로 열기
+
+private extension JournalListView {
+    /// 알림에서 받은 회고를 상세 화면으로 연다. 이미 지워진 회고면 무시한다.
+    func openPendingJournalIfNeeded() {
+        guard let id = router.pendingJournalID else { return }
+        if let journal = journals.first(where: { $0.id == id }) {
+            isAddingNew = false
+            selectedJournal = journal
+            router.pendingJournalID = nil
+        } else if !journals.isEmpty {
+            // 목록을 다 읽었는데 없으면 삭제된 회고다
+            router.pendingJournalID = nil
         }
     }
 }

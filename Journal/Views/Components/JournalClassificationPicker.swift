@@ -35,6 +35,22 @@ struct JournalClassificationPicker: View {
             }
 
             group("태그") {
+                // 추가 버튼은 입력칸 안쪽 오른쪽 끝에 놓습니다.
+                HStack(spacing: 8) {
+                    TextField("태그 입력", text: $tagInput)
+                        .textInputAutocapitalization(.never)
+                        .submitLabel(.done)
+                        .onSubmit(commitTagInput)
+
+                    JournalChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
+                        .disabled(JournalDatabase.normalizedTag(tagInput) == nil)
+                }
+                .padding(.leading, 16)
+                .padding(.trailing, 8)
+                .padding(.vertical, 6)
+                .frame(minHeight: 52)
+                .fieldBackground()
+
                 if !tags.isEmpty {
                     FlowLayout(spacing: 8) {
                         ForEach(tags, id: \.self) { tag in
@@ -43,17 +59,6 @@ struct JournalClassificationPicker: View {
                             }
                         }
                     }
-                }
-
-                HStack(spacing: 10) {
-                    TextField("태그 입력", text: $tagInput)
-                        .textInputAutocapitalization(.never)
-                        .submitLabel(.done)
-                        .onSubmit(commitTagInput)
-                        .fieldStyle()
-
-                    JournalChip(title: "추가", isSelected: JournalDatabase.normalizedTag(tagInput) != nil, action: commitTagInput)
-                        .disabled(JournalDatabase.normalizedTag(tagInput) == nil)
                 }
 
                 if !unselectedTagSuggestions.isEmpty {

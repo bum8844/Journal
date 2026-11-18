@@ -7,11 +7,17 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct JournalApp: App {
     // 테마 선택은 UserDefaults에 저장돼 재실행 후에도 유지됩니다. 최초 실행에서는 시스템 테마를 따릅니다.
     @AppStorage("appTheme") private var appTheme: AppTheme = .system
+
+    init() {
+        // 알림을 눌러 앱이 켜지는 경우도 받으려면 앱이 시작될 때 담당을 등록해 둬야 합니다.
+        UNUserNotificationCenter.current().delegate = NotificationCoordinator.shared
+    }
 
     var body: some Scene {
         WindowGroup {

@@ -12,63 +12,83 @@ struct JournalDetailView: View {
     let journal: JournalDatabase
     // 수정 버튼을 누르면 같은 회고를 편집 화면으로 연다
     @State private var isEditing = false
-    // [YeongyuJung 수정] 상세 화면 삭제 기능 추가: 확인을 받은 뒤, 화면이 닫힌 다음에 저장소에서 지운다
+    // [YeongyuJung 수정] 상세 화면 삭제 기능 추가: 확인을 받으면 저장소에서 지우고, 저장에 성공하면 화면을 닫는다
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var isConfirmingDelete = false
-    @State private var shouldDeleteOnDisappear = false
+    // 삭제가 저장된 뒤에는 지워진 회고를 다시 읽지 않도록 내용을 숨긴다 (화면이 닫히기 전까지)
+    @State private var isRemoved = false
+    // 삭제를 저장하지 못했을 때 알려 주는 얼럿
+    @State private var isShowingDeleteError = false
 
     var body: some View {
         ZStack {
             JournalTheme.background.ignoresSafeArea()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .top) {
-                        Text(journal.title)
-                            .font(.largeTitle.bold())
-                            .foregroundStyle(JournalTheme.text)
+            if !isRemoved {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack(alignment: .top) {
+                                Text(journal.title)
+                                    .font(.largeTitle.bold())
+                                    .foregroundStyle(JournalTheme.text)
 
-                        Spacer(minLength: 8)
+                                Spacer(minLength: 8)
 
-                        Text(journal.category)
-                            .font(.footnote)
-                            .foregroundStyle(JournalTheme.badgeText)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 5)
-                            .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
+                                Text(journal.category)
+                                    .font(.footnote)
+                                    .foregroundStyle(JournalTheme.badgeText)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 5)
+                                    .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
+                            }
+
+                            if !journal.tags.isEmpty {
+                                Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
+                                    .font(.subheadline)
+                                    .foregroundStyle(JournalTheme.accent)
+                            }
+
+                            Text(journal.displayDateString)
+                                .font(.subheadline)
+                                .foregroundStyle(JournalTheme.subText)
+
+                            Divider()
+
+                            if let photoData = journal.photoData, let image = UIImage(data: photoData) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity)
+                                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                                    .accessibilityLabel("첨부한 사진")
+                            }
+
+                            Text(journal.content)
+                                .font(.body)
+                                .foregroundStyle(JournalTheme.text)
+                                .lineSpacing(6)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(24)
+                        .glassCard(cornerRadius: 32)
+
+                        if let comment = journal.aiComment {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("AI 한마디", systemImage: "sparkles")
+                                    .font(.headline)
+                                    .foregroundStyle(JournalTheme.accent)
+                                Text(comment)
+                                    .foregroundStyle(JournalTheme.text)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(20)
+                            .glassCard()
+                        }
                     }
-
-                    if !journal.tags.isEmpty {
-                        Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
-                            .font(.subheadline)
-                            .foregroundStyle(JournalTheme.accent)
-                    }
-
-                    Text(journal.displayDateString)
-                        .font(.subheadline)
-                        .foregroundStyle(JournalTheme.subText)
-
-                    Divider()
-
-                    if let photoData = journal.photoData, let image = UIImage(data: photoData) {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .clipShape(RoundedRectangle(cornerRadius: 20))
-                            .accessibilityLabel("첨부한 사진")
-                    }
-
-                    Text(journal.content)
-                        .font(.body)
-                        .foregroundStyle(JournalTheme.text)
-                        .lineSpacing(6)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
                 }
-                .padding(24)
-                .glassCard(cornerRadius: 32)
-                .padding(20)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -78,19 +98,13 @@ struct JournalDetailView: View {
         }
         // [YeongyuJung 수정] 삭제 확인 창을 얼럿(alert)으로 표시
         .alert("이 회고를 삭제할까요?", isPresented: $isConfirmingDelete) {
-            Button("삭제", role: .destructive) {
-                shouldDeleteOnDisappear = true
-                dismiss()
-            }
+            Button("삭제", role: .destructive) { deleteJournal() }
             Button("취소", role: .cancel) {}
         } message: {
             Text("삭제한 회고는 되돌릴 수 없어요.")
         }
-        // 화면이 사라진 뒤에 지워야, 지워진 데이터를 이 화면이 다시 읽다가 문제가 생기지 않는다
-        .onDisappear {
-            guard shouldDeleteOnDisappear else { return }
-            modelContext.delete(journal)
-            try? modelContext.save()
+        .alert(JournalDeletion.failureMessage, isPresented: $isShowingDeleteError) {
+            Button("확인", role: .cancel) {}
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -110,6 +124,22 @@ struct JournalDetailView: View {
                 .buttonStyle(PressColorButtonStyle(pressed: .red))
             }
         }
+    }
+}
+
+private extension JournalDetailView {
+    /// 회고를 지운다. 저장에 성공하면 종료 알림을 정리하고 화면을 닫는다.
+    /// 실패하면 회고를 되돌리고 화면에 남아 얼럿을 보여 준다. (기존 알림 예약은 건드리지 않는다)
+    func deleteJournal() {
+        let journalID = journal.id
+        guard JournalDeletion.delete(journal, in: modelContext) else {
+            isShowingDeleteError = true
+            return
+        }
+        isRemoved = true
+        dismiss()
+        // 삭제 저장이 성공한 뒤에만 종료 알림을 정리한다
+        Task { _ = await PeriodReminderScheduler.shared.reconcile(journalID: journalID, in: modelContext) }
     }
 }
 

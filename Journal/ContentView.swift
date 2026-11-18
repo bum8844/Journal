@@ -13,26 +13,39 @@ struct ContentView: View {
     // JournalApp에 저장된 테마를 읽고, 설정 화면에서 바꾼 값을 같은 상태에 반영합니다.
     @Binding var theme: AppTheme
     @Environment(\.modelContext) private var modelContext
+    @State private var selectedTab: AppTab = .journal
+    private let router = NotificationRouter.shared
+
+    private enum AppTab: Hashable {
+        case journal, statistics, settings
+    }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             // JournalListView 안에 NavigationStack이 있어 탭에서 다시 감싸지 않습니다.
             JournalListView()
 #if DEBUG
                 .task { JournalDatabase.seedSamplesIfNeeded(in: modelContext) }
 #endif
                 .tabItem { Label("회고", systemImage: "list.bullet.rectangle") }
+                .tag(AppTab.journal)
 
             NavigationStack {
                 ReflectionStatisticsView()
             }
             .tabItem { Label("통계", systemImage: "chart.bar") }
+            .tag(AppTab.statistics)
 
             NavigationStack {
                 // 설정의 Picker가 바꾼 값은 이 바인딩을 통해 JournalApp까지 전달됩니다.
                 ThemeSettingsView(theme: $theme)
             }
             .tabItem { Label("설정", systemImage: "gearshape") }
+            .tag(AppTab.settings)
+        }
+        // 알림을 누르면 어느 탭에 있었든 회고 탭으로 이동한다. 상세 화면은 목록이 연다.
+        .onChange(of: router.pendingJournalID, initial: true) { _, id in
+            if id != nil { selectedTab = .journal }
         }
     }
 }
