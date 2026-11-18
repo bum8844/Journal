@@ -12,7 +12,6 @@ import SwiftData
 struct ContentView: View {
     // JournalApp에 저장된 테마를 읽고, 설정 화면에서 바꾼 값을 같은 상태에 반영합니다.
     @Binding var theme: AppTheme
-    @Environment(\.modelContext) private var modelContext
     @State private var selectedTab: AppTab = .journal
     private let router = NotificationRouter.shared
 
@@ -24,9 +23,6 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             // JournalListView 안에 NavigationStack이 있어 탭에서 다시 감싸지 않습니다.
             JournalListView()
-#if DEBUG
-                .task { JournalDatabase.seedSamplesIfNeeded(in: modelContext) }
-#endif
                 .tabItem { Label("회고", systemImage: "list.bullet.rectangle") }
                 .tag(AppTab.journal)
 
