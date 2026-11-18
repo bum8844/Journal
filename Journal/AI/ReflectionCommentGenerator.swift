@@ -1,7 +1,9 @@
 import Foundation
 import FoundationModels
 
+/// 기기 안의 Apple Intelligence 모델(Foundation Models)로 회고 한마디를 만든다. 글이 기기 밖으로 나가지 않는다.
 enum ReflectionCommentGenerator {
+    /// 모델을 쓸 수 없는 이유를 안내 문구로 돌려준다. 쓸 수 있으면 nil.
     static var unavailableMessage: String? {
         let model = SystemLanguageModel.default
         switch model.availability {
@@ -19,6 +21,7 @@ enum ReflectionCommentGenerator {
         }
     }
 
+    /// 회고 내용으로 다음에 시도할 행동 한 가지를 한국어 1~2문장으로 만든다.
     static func generate(for input: ReflectionCommentInput) async throws -> String {
         // 긴 복합 지시문에서 일상 회고까지 제한되던 현상을 줄이도록 목적만 짧게 전달한다.
         let session = LanguageModelSession(

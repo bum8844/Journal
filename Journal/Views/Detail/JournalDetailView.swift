@@ -12,7 +12,7 @@ struct JournalDetailView: View {
     let journal: JournalDatabase
     // 수정 버튼을 누르면 같은 회고를 편집 화면으로 연다
     @State private var isEditing = false
-    // [YeongyuJung 수정] 상세 화면 삭제 기능 추가: 확인을 받으면 저장소에서 지우고, 저장에 성공하면 화면을 닫는다
+    // 상세 화면 삭제 기능 추가: 확인을 받으면 저장소에서 지우고, 저장에 성공하면 화면을 닫는다
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var isConfirmingDelete = false
@@ -96,7 +96,7 @@ struct JournalDetailView: View {
         .navigationDestination(isPresented: $isEditing) {
             JournalEditorView(journal: journal)
         }
-        // [YeongyuJung 수정] 삭제 확인 창을 얼럿(alert)으로 표시
+        // 삭제 확인 창을 얼럿(alert)으로 표시
         .alert("이 회고를 삭제할까요?", isPresented: $isConfirmingDelete) {
             Button("삭제", role: .destructive) { deleteJournal() }
             Button("취소", role: .cancel) {}
@@ -116,7 +116,7 @@ struct JournalDetailView: View {
                 .buttonStyle(PressColorButtonStyle(pressed: .blue))
 
                 Button(role: .destructive) {
-                    // [YeongyuJung 수정] 삭제 버튼 연결: 바로 지우지 않고 확인 창을 먼저 띄운다
+                    // 삭제 버튼 연결: 바로 지우지 않고 확인 창을 먼저 띄운다
                     isConfirmingDelete = true
                 } label: {
                     Label("삭제", systemImage: "trash")
