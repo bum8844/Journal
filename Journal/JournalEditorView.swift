@@ -295,7 +295,7 @@ struct JournalEditorView: View {
                 aiComment = comment
             } catch {
                 guard !Task.isCancelled, input == commentInput else { return }
-                aiCommentError = "AI 한마디를 만들지 못했어요. 다시 시도해 주세요."
+                aiCommentError = ReflectionCommentGenerator.failureMessage(for: error)
             }
         }
     }

@@ -20,6 +20,8 @@ struct ReflectionStatisticsView: View {
     @Environment(\.calendar) private var calendar
     @State private var period: Period = .month
     @State private var selectedDate = Date.now
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var statisticsNow = Date.now
 
     var body: some View {
         let selectedInterval = calendar.dateInterval(of: period.component, for: selectedDate)
@@ -66,10 +68,12 @@ struct ReflectionStatisticsView: View {
                         tags: reflection.tags,
                         category: reflection.category,
                         isPeriod: reflection.isPeriod,
-                        hasPhoto: reflection.photoData?.isEmpty == false
+                        hasPhoto: reflection.photoData?.isEmpty == false,
+                        endDate: reflection.endDate,
+                        importance: reflection.effectiveImportance.rawValue
                     )
                 }
-                let statistics = ReflectionStatistics(entries: entries, interval: interval, calendar: calendar)
+                let statistics = ReflectionStatistics(entries: entries, interval: interval, calendar: calendar, now: statisticsNow)
 
                 ReflectionStatisticsCharts(statistics: statistics, calendar: calendar)
             }
@@ -80,6 +84,17 @@ struct ReflectionStatisticsView: View {
         .foregroundStyle(JournalTheme.text)
         .tint(JournalTheme.accent)
         .navigationTitle("통계")
+        .task {
+            // 화면이 열린 채로 날짜가 바뀌어도 종료 상태를 갱신한다.
+            while !Task.isCancelled {
+                statisticsNow = .now
+                do { try await Task.sleep(for: .seconds(60)) }
+                catch { return }
+            }
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { statisticsNow = .now }
+        }
         .onChange(of: period) {
             // 기간 단위를 바꾸면 이번 주 또는 이번 달부터 보여줍니다.
             selectedDate = .now
