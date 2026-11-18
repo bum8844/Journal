@@ -30,6 +30,35 @@ struct ReflectionStatisticsCharts: View {
             .listRowBackground(JournalTheme.glassFill)
         }
 
+        Section("기간 회고 일정") {
+            if statistics.periodCount == 0 {
+                Text("이 기간에 작성한 기간 회고가 없어요.")
+                    .foregroundStyle(JournalTheme.subText)
+            } else {
+                countBar("진행 중", count: statistics.ongoingPeriodCount, total: statistics.periodCount)
+                countBar("종료", count: statistics.endedPeriodCount, total: statistics.periodCount)
+                if statistics.undatedPeriodCount > 0 {
+                    LabeledContent("종료일 없음", value: "\(statistics.undatedPeriodCount)건")
+                }
+                Text("종료일이 지난 회고를 종료로 집계해요. 종료일 당일은 진행 중이에요.")
+                    .font(.footnote)
+                    .foregroundStyle(JournalTheme.subText)
+            }
+        }
+        .listRowBackground(JournalTheme.glassFill)
+
+        Section("중요도") {
+            if statistics.reflectionCount == 0 {
+                Text("이 기간에 작성한 회고가 없어요.")
+                    .foregroundStyle(JournalTheme.subText)
+            } else {
+                countBar("1 · 높음", count: statistics.importanceCounts[0])
+                countBar("2 · 보통", count: statistics.importanceCounts[1])
+                countBar("3 · 낮음", count: statistics.importanceCounts[2])
+            }
+        }
+        .listRowBackground(JournalTheme.glassFill)
+
         Section("자주 쓴 태그") {
             if statistics.tagCounts.isEmpty {
                 Text("이 기간에 등록된 태그가 없어요.")
@@ -56,10 +85,10 @@ struct ReflectionStatisticsCharts: View {
     }
 
     // 같은 기간의 전체 회고를 기준으로 각 항목의 건수와 비중을 함께 표시합니다.
-    private func countBar(_ title: String, count: Int) -> some View {
+    private func countBar(_ title: String, count: Int, total: Int? = nil) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             LabeledContent(title, value: "\(count)건")
-            ProgressView(value: Double(count), total: Double(statistics.reflectionCount))
+            ProgressView(value: Double(count), total: Double(max(total ?? statistics.reflectionCount, 1)))
                 .tint(JournalTheme.accent)
                 .accessibilityHidden(true)
         }

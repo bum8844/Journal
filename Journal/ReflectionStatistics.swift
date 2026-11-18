@@ -7,6 +7,8 @@ struct StatisticsEntry {
     let category: String
     let isPeriod: Bool
     let hasPhoto: Bool
+    var endDate: Date? = nil
+    var importance: Int = 2
 }
 
 /// 한 태그가 붙은 회고 수입니다. 태그 문자열을 목록 항목의 고유 식별자로 사용합니다.
@@ -36,6 +38,10 @@ struct ReflectionStatistics {
     let reflectionCount: Int
     let periodCount: Int
     let photoCount: Int
+    let endedPeriodCount: Int
+    let ongoingPeriodCount: Int
+    let undatedPeriodCount: Int
+    let importanceCounts: [Int]
 
     var singleDayCount: Int { reflectionCount - periodCount }
     let tagCounts: [TagCount]
@@ -43,7 +49,7 @@ struct ReflectionStatistics {
     let categoryCounts: [CategoryCount]
 
     /// 시작 시각을 포함하고 끝 시각을 제외해 인접한 주나 달에 같은 기록을 두 번 세지 않습니다.
-    init(entries: [StatisticsEntry], interval: DateInterval, calendar: Calendar) {
+    init(entries: [StatisticsEntry], interval: DateInterval, calendar: Calendar, now: Date = .now) {
         let periodEntries = entries.filter {
             interval.start <= $0.createdAt && $0.createdAt < interval.end
         }
@@ -52,6 +58,16 @@ struct ReflectionStatistics {
         // 기간에 걸친 날짜 수와 무관하게 회고 한 개를 한 건으로 셉니다.
         periodCount = periodEntries.count(where: \.isPeriod)
         photoCount = periodEntries.count(where: \.hasPhoto)
+
+        // 종료일 당일까지 진행 중으로 표시한다. 종료는 작업 완료 판정과 별개다.
+        let today = calendar.startOfDay(for: now)
+        let endDates = periodEntries.filter(\.isPeriod).compactMap(\.endDate)
+        endedPeriodCount = endDates.count { calendar.startOfDay(for: $0) < today }
+        ongoingPeriodCount = endDates.count - endedPeriodCount
+        undatedPeriodCount = periodCount - endDates.count
+        importanceCounts = (1...3).map { level in
+            periodEntries.count { $0.importance == level }
+        }
 
         // 기록이 없는 날도 0건으로 채워 날짜 순서와 간격을 유지합니다.
         let entriesByDay = Dictionary(grouping: periodEntries) { calendar.startOfDay(for: $0.createdAt) }
