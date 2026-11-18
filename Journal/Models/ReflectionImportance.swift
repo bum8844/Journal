@@ -16,6 +16,15 @@ enum ReflectionImportance: Int, Codable, CaseIterable {
         case .low: "3 · 낮음"
         }
     }
+
+    /// 목록 카드 배지에 보이는 짧은 이름
+    var shortTitle: String {
+        switch self {
+        case .high: "높음"
+        case .normal: "보통"
+        case .low: "낮음"
+        }
+    }
 }
 
 extension JournalDatabase {
