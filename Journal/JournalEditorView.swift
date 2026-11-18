@@ -229,11 +229,9 @@ struct JournalEditorView: View {
         }
     }
 
-    /// 자유 형식: 오늘의 질문 카드 + 큰 본문 입력칸
+    /// 자유 형식: 큰 본문 입력칸
     private var freeContentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            TodayQuestionCard()
-
             TextEditor(text: $content)
                 .scrollContentBackground(.hidden)
                 .frame(minHeight: 260)
