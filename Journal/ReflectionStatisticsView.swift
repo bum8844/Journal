@@ -17,11 +17,13 @@ struct ReflectionStatisticsView: View {
 
     // 앱의 SwiftData 컨테이너에서 회고를 읽고, 저장된 기록이 바뀌면 조회 결과를 갱신합니다.
     @Query private var reflections: [JournalDatabase]
-    @Environment(\.calendar) private var calendar
+    @Environment(\.calendar) private var systemCalendar
+    private var calendar: Calendar { ReflectionStatistics.reportingCalendar(from: systemCalendar) }
     @State private var period: Period = .month
     @State private var selectedDate = Date.now
     @Environment(\.scenePhase) private var scenePhase
     @State private var statisticsNow = Date.now
+    @State private var selectedCategory: String?
 
     var body: some View {
         let selectedInterval = calendar.dateInterval(of: period.component, for: selectedDate)
@@ -70,12 +72,15 @@ struct ReflectionStatisticsView: View {
                         isPeriod: reflection.isPeriod,
                         hasPhoto: reflection.photoData?.isEmpty == false,
                         endDate: reflection.endDate,
-                        importance: reflection.effectiveImportance.rawValue
+                        importance: reflection.effectiveImportance.rawValue,
+                        startDate: reflection.startDate
                     )
                 }
                 let statistics = ReflectionStatistics(entries: entries, interval: interval, calendar: calendar, now: statisticsNow)
 
-                ReflectionStatisticsCharts(statistics: statistics, calendar: calendar)
+                ReflectionStatisticsCharts(statistics: statistics, calendar: calendar) { category in
+                    selectedCategory = category
+                }
             }
         }
         // 팀 공통 테마: 시스템 목록 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
@@ -84,6 +89,11 @@ struct ReflectionStatisticsView: View {
         .foregroundStyle(JournalTheme.text)
         .tint(JournalTheme.accent)
         .navigationTitle("통계")
+        .navigationDestination(item: $selectedCategory) { category in
+            if let interval = selectedInterval {
+                categoryList(category, in: interval)
+            }
+        }
         .task {
             // 화면이 열린 채로 날짜가 바뀌어도 종료 상태를 갱신한다.
             while !Task.isCancelled {
@@ -99,6 +109,34 @@ struct ReflectionStatisticsView: View {
             // 기간 단위를 바꾸면 이번 주 또는 이번 달부터 보여줍니다.
             selectedDate = .now
         }
+    }
+
+    /// 통계와 같은 작성일 범위·카테고리 규칙으로 원본 회고를 보여 줍니다.
+    private func categoryList(_ category: String, in interval: DateInterval) -> some View {
+        let journals = reflections.filter {
+            interval.start <= $0.createdAt && $0.createdAt < interval.end
+                && JournalCategory.normalized($0.category) == category
+        }.sorted { $0.createdAt > $1.createdAt }
+
+        return List {
+            if journals.isEmpty {
+                Text("이 기간에 해당하는 회고가 없어요.")
+            }
+            ForEach(journals) { journal in
+                NavigationLink {
+                    JournalDetailView(journal: journal)
+                } label: {
+                    JournalCardView(journal: journal)
+                }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .journalBackground()
+        .foregroundStyle(JournalTheme.text)
+        .navigationTitle(JournalCategory.title(for: category))
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func periodTitle(for interval: DateInterval) -> String {
