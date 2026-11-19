@@ -148,7 +148,17 @@ struct JournalEditorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // 이미 저장한 글은 형식을 바꿀 수 없다. 다른 형식으로 옮겨 저장하면
+                // 원래 형식에 쓴 내용(자유 형식의 본문 등)이 사라지기 때문이다.
                 FormatTabBar(selection: $format)
+                    .disabled(journal != nil)
+
+                if journal != nil {
+                    Text("저장한 글은 형식을 바꿀 수 없어요.")
+                        .font(.footnote)
+                        .foregroundStyle(JournalTheme.subText)
+                        .padding(.top, -8)
+                }
 
                 FormatGuideBanner(
                     title: "나의 하루 돌아보기",
