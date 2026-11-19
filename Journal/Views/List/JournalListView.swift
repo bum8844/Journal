@@ -171,22 +171,35 @@ struct JournalListView: View {
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 7, trailing: 0))
 
-            ForEach(filteredJournals) { journal in
-                Button {
-                    selectedJournal = journal
-                } label: {
-                    JournalCardView(journal: journal)
-                }
-                .buttonStyle(.plain)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 7, leading: 20, bottom: 7, trailing: 20))
-                // 오른쪽에서 왼쪽으로 밀면 삭제 버튼이 나타난다 (끝까지 밀면 바로 삭제)
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        delete(journal)
-                    } label: {
-                        Label("삭제", systemImage: "trash")
+            // 작성일(createdAt)별로 나눈다. 구간 제목은 스크롤 때 고정되지 않도록 일반 줄로 둔다
+            ForEach(JournalDaySection.sections(from: filteredJournals)) { section in
+                Section {
+                    Text(section.title())
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(JournalTheme.subText)
+                        .accessibilityAddTraits(.isHeader)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 10, leading: 20, bottom: 0, trailing: 20))
+
+                    ForEach(section.journals) { journal in
+                        Button {
+                            selectedJournal = journal
+                        } label: {
+                            JournalCardView(journal: journal)
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 7, leading: 20, bottom: 7, trailing: 20))
+                        // 오른쪽에서 왼쪽으로 밀면 삭제 버튼이 나타난다 (끝까지 밀면 바로 삭제)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                delete(journal)
+                            } label: {
+                                Label("삭제", systemImage: "trash")
+                            }
+                        }
                     }
                 }
             }
