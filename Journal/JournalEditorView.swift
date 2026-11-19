@@ -145,6 +145,14 @@ struct JournalEditorView: View {
         aiCommentInput == commentInput ? aiComment : nil
     }
 
+    private var canGenerateAIComment: Bool {
+        if format == .free { return commentInput.canGenerate }
+        // 질문 제목이 아니라 실제 답변에 내용을 적었는지 확인합니다.
+        return answers.contains {
+            ReflectionCommentInput(format: format.title, title: title, body: $0).canGenerate
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -260,6 +268,10 @@ struct JournalEditorView: View {
                 Text(message)
                     .font(.footnote)
                     .foregroundStyle(JournalTheme.subText)
+            } else if !canGenerateAIComment {
+                Text("단어나 문장으로 회고 내용을 적으면 AI 한마디를 만들 수 있어요.")
+                    .font(.footnote)
+                    .foregroundStyle(JournalTheme.subText)
             }
             if aiCommentTask != nil {
                 ProgressView("AI 한마디를 만드는 중…")
@@ -275,7 +287,7 @@ struct JournalEditorView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(JournalTheme.accent)
                 .buttonBorderShape(.roundedRectangle(radius: 16))
-                .disabled(!commentInput.canGenerate || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
+                .disabled(!canGenerateAIComment || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
             }
         }
         .onDisappear {
