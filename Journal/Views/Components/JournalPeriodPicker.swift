@@ -19,7 +19,7 @@ struct JournalPeriodValue: Equatable {
 
         var message: String {
             switch self {
-            case .startInFuture: "시작일은 오늘 이후로 정할 수 없어요."
+            case .startInFuture: "하루 회고의 날짜는 오늘 이후로 정할 수 없어요."
             case .endBeforeStart: "종료일은 시작일보다 빠를 수 없어요."
             }
         }
@@ -42,7 +42,9 @@ struct JournalPeriodValue: Equatable {
     /// 지금 값에 문제가 있으면 그 내용을, 없으면 nil을 돌려줍니다.
     func problem(calendar: Calendar = .current, now: Date = .now) -> Problem? {
         let start = calendar.startOfDay(for: startDate)
-        if start > calendar.startOfDay(for: now) { return .startInFuture }
+        // 하루 회고는 지나간 일을 적는 글이라 오늘까지만 고를 수 있다.
+        // 기간 회고는 앞으로 시작할 기간(진행 전)도 쓸 수 있어서 시작일의 미래를 막지 않는다.
+        if !isPeriod && start > calendar.startOfDay(for: now) { return .startInFuture }
         if isPeriod && calendar.startOfDay(for: endDate) < start { return .endBeforeStart }
         return nil
     }
@@ -86,7 +88,8 @@ struct JournalPeriodPicker: View {
 
             VStack(spacing: 0) {
                 if value.isPeriod {
-                    dateRow("시작", icon: "calendar", selection: startBinding, range: ...startUpperBound)
+                    // 기간 회고는 시작일도 미래로 고를 수 있습니다. (진행 전 회고)
+                    dateRow("시작", icon: "calendar", selection: startBinding, range: Date.distantPast...Date.distantFuture)
                     Divider().overlay(JournalTheme.glassBorder)
                     // 종료일은 시작일 이후만 고를 수 있습니다. 미래도 가능해서 진행 중인 회고를 쓸 수 있습니다.
                     dateRow("종료", icon: "calendar.badge.checkmark", selection: endBinding, range: endLowerBound...Date.distantFuture)
