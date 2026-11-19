@@ -9,6 +9,7 @@ struct StatisticsEntry {
     let hasPhoto: Bool
     var endDate: Date? = nil
     var importance: Int = 2
+    var startDate: Date? = nil
 }
 
 /// 한 태그가 붙은 회고 수입니다. 태그 문자열을 목록 항목의 고유 식별자로 사용합니다.
@@ -27,19 +28,28 @@ struct DailyReflectionCount: Identifiable {
 }
 
 struct CategoryCount: Identifiable {
-    let name: String
+    let category: String
     let count: Int
 
-    var id: String { name }
+    var id: String { category }
+    var name: String { JournalCategory.title(for: category) }
 }
 
 /// 선택한 기간의 회고를 날짜, 종류, 사진 첨부, 태그와 카테고리별로 집계합니다.
 struct ReflectionStatistics {
+    /// 기기의 시간대는 유지하되 주간 회고는 월요일부터 일요일까지 묶습니다.
+    static func reportingCalendar(from calendar: Calendar) -> Calendar {
+        var result = calendar
+        result.firstWeekday = 2
+        return result
+    }
+
     let reflectionCount: Int
     let periodCount: Int
     let photoCount: Int
     let endedPeriodCount: Int
     let ongoingPeriodCount: Int
+    let upcomingPeriodCount: Int
     let undatedPeriodCount: Int
     let importanceCounts: [Int]
 
@@ -59,12 +69,30 @@ struct ReflectionStatistics {
         periodCount = periodEntries.count(where: \.isPeriod)
         photoCount = periodEntries.count(where: \.hasPhoto)
 
-        // 종료일 당일까지 진행 중으로 표시한다. 종료는 작업 완료 판정과 별개다.
+        // 시작 전은 예정, 시작일부터 종료일 당일까지는 진행 중으로 구분합니다.
+        // 종료는 작업 완료 판정과 별개이며, 시작일이 없는 옛 글은 작성일을 대신 사용합니다.
         let today = calendar.startOfDay(for: now)
-        let endDates = periodEntries.filter(\.isPeriod).compactMap(\.endDate)
-        endedPeriodCount = endDates.count { calendar.startOfDay(for: $0) < today }
-        ongoingPeriodCount = endDates.count - endedPeriodCount
-        undatedPeriodCount = periodCount - endDates.count
+        var upcoming = 0
+        var ongoing = 0
+        var ended = 0
+        var undated = 0
+        for entry in periodEntries where entry.isPeriod {
+            guard let endDate = entry.endDate else {
+                undated += 1
+                continue
+            }
+            if calendar.startOfDay(for: endDate) < today {
+                ended += 1
+            } else if calendar.startOfDay(for: entry.startDate ?? entry.createdAt) > today {
+                upcoming += 1
+            } else {
+                ongoing += 1
+            }
+        }
+        upcomingPeriodCount = upcoming
+        ongoingPeriodCount = ongoing
+        endedPeriodCount = ended
+        undatedPeriodCount = undated
         importanceCounts = (1...3).map { level in
             periodEntries.count { $0.importance == level }
         }
@@ -82,10 +110,9 @@ struct ReflectionStatistics {
 
         // 카테고리가 없는 회고도 비율의 분모에 포함합니다.
         let entriesByCategory = Dictionary(grouping: periodEntries) { entry in
-            let name = entry.category.trimmingCharacters(in: .whitespacesAndNewlines)
-            return name.isEmpty ? "미분류" : name
+            JournalCategory.normalized(entry.category)
         }
-        categoryCounts = entriesByCategory.map { CategoryCount(name: $0.key, count: $0.value.count) }.sorted {
+        categoryCounts = entriesByCategory.map { CategoryCount(category: $0.key, count: $0.value.count) }.sorted {
             if $0.count == $1.count {
                 return $0.name < $1.name
             }

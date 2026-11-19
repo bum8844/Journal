@@ -52,7 +52,7 @@ enum ReflectionCommentGenerator {
         }
         try Task.checkCancellation()
         let comment = suggestion(from: response)
-        guard !comment.isEmpty else { throw GenerationFailure.emptyResponse }
+        guard !comment.isEmpty else { throw GenerationFailure.noActionableSuggestion }
         return comment
     }
 
@@ -62,7 +62,12 @@ enum ReflectionCommentGenerator {
         }
         // 회고 속 '나'를 AI 자신으로 해석하지 않도록 작성자와 응답자의 역할을 구분합니다.
         let session = LanguageModelSession(
-            instructions: "사용자가 쓴 회고를 읽고, 그 사람에게 다음에 해 볼 행동 하나를 한국어 존댓말로 제안하세요."
+            instructions: """
+            사용자가 쓴 회고를 읽고, 그 사람이 다음에 직접 해 볼 작은 행동 하나를 한국어 존댓말 한 문장으로 제안하세요.
+            무엇을 어떻게 할지 구체적으로 쓰고 '해 보세요' 또는 '어떨까요?'로 권하세요.
+            인사, 평가, 회고 요약, '행동을 추천합니다' 같은 소개 문장은 쓰지 마세요.
+            회고에 없는 사실을 지어내지 말고, 정보가 적으면 관련된 작은 준비 행동을 제안하세요.
+            """
         )
         let response = try await session.respond(
             to: input.prompt,
@@ -83,11 +88,14 @@ enum ReflectionCommentGenerator {
                 if !sentence.isEmpty { sentences.append(sentence) }
             }
         }
-        let suggestion = sentences.first {
-            $0.contains("보세요") || $0.contains("어떨까요") || $0.contains("추천")
-        }
-        // 자신의 계획으로 답한 문장은 제안으로 표시하지 않습니다.
-        return suggestion ?? sentences.first(where: { !$0.contains("겠습니다") && !$0.contains("저는") }) ?? ""
+        return sentences.first { sentence in
+            // '추천'만 들어 있는 소개·요약을 실제 행동 제안으로 받아들이지 않습니다.
+            // 모델의 모든 의미를 판정하는 검사는 아니며, 확인된 빈 소개 문장을 걸러 냅니다.
+            let isInvitation = sentence.contains("보세요") || sentence.contains("어떨까요")
+            let isIntroduction = ["추천해 드", "추천해드", "제안해 드", "제안해드", "추천합니다", "제안합니다"]
+                .contains { sentence.contains($0) }
+            return isInvitation && !isIntroduction && !sentence.contains("겠습니다")
+        } ?? ""
     }
 
     /// 모델의 응답 제한은 저장 오류와 구분해서 안내한다.
@@ -98,6 +106,8 @@ enum ReflectionCommentGenerator {
         switch error {
         case GenerationFailure.insufficientContent:
             return "단어나 문장으로 회고 내용을 조금 더 적어 주세요."
+        case GenerationFailure.noActionableSuggestion:
+            return "구체적인 행동 제안을 만들지 못했어요. 다시 생성해 주세요. 회고는 그대로 저장할 수 있어요."
         case LanguageModelError.guardrailViolation, LanguageModelError.refusal:
             return "Apple Intelligence의 응답 제한으로 생성하지 못했어요. 회고는 AI 한마디 없이도 저장할 수 있어요."
         default:
@@ -132,7 +142,7 @@ enum ReflectionCommentGenerator {
     }
 
     private enum GenerationFailure: Error {
-        case emptyResponse
+        case noActionableSuggestion
         case insufficientContent
         case modelPreparing
     }
