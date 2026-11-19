@@ -23,6 +23,10 @@ extension View {
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
+    /// 줄바꿈을 정할 때 허용하는 오차. 칩 너비 합이 한 줄 너비와 거의 같을 때,
+    /// 소수점 오차 때문에 마지막 칩이 다음 줄로 넘어가 높이 계산과 어긋나는 것을 막는다.
+    private let tolerance: CGFloat = 0.5
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         var x: CGFloat = 0
@@ -32,7 +36,7 @@ struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            if x > 0 && x + size.width > maxWidth {
+            if x > 0 && x + size.width > maxWidth + tolerance {
                 x = 0
                 y += rowHeight + spacing
                 rowHeight = 0
@@ -41,7 +45,10 @@ struct FlowLayout: Layout {
             rowHeight = max(rowHeight, size.height)
             usedWidth = max(usedWidth, x - spacing)
         }
-        return CGSize(width: usedWidth, height: y + rowHeight)
+        // 너비가 정해져 있으면 그 너비를 그대로 보고한다. 칩이 쓴 너비만 보고하면
+        // 배치할 때 한 줄 너비가 딱 맞아 줄바꿈이 달라질 수 있다.
+        let width = proposal.width.map { $0.isFinite ? $0 : usedWidth } ?? usedWidth
+        return CGSize(width: width, height: y + rowHeight)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
@@ -51,7 +58,7 @@ struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(.unspecified)
-            if x > bounds.minX && x + size.width > bounds.maxX {
+            if x > bounds.minX && x + size.width > bounds.maxX + tolerance {
                 x = bounds.minX
                 y += rowHeight + spacing
                 rowHeight = 0
