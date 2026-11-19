@@ -128,6 +128,17 @@ extension JournalDatabase {
             category: "확인", tags: ["작년"], format: .free,
             isPeriod: true, startDate: day(-380), endDate: day(-370), importance: .low))
 
+        items.append(JournalDatabase(
+            title: "[선택일>작성일] 내일 일을 미리 작성", content: "선택한 날짜가 작성일보다 뒤인 하루 회고.",
+            category: "확인", tags: ["날짜"], format: .free,
+            isPeriod: false, startDate: day(1), importance: .normal))
+
+        // 기간 회고인데 날짜가 비어 있는 글 (옛 데이터가 있어도 목록과 상세가 깨지지 않는지 확인)
+        items.append(JournalDatabase(
+            title: "[기간·날짜 없음] 날짜가 비어 있는 기간 회고", content: "기간 회고지만 시작일과 종료일이 저장되지 않은 글.",
+            category: "확인", tags: ["날짜"], format: .free,
+            isPeriod: true, startDate: nil, endDate: nil, importance: .normal))
+
         #if canImport(UIKit)
         if let data = debugPhotoData() {
             items.append(JournalDatabase(
@@ -149,12 +160,14 @@ extension JournalDatabase {
             ("[사진 있음]", minutesAgo(30)),
             ("[하루·4L]", minutesAgo(50)),
             ("[선택일≠작성일]", minutesAgo(70)),
+            ("[선택일>작성일]", minutesAgo(90)),
             ("[경계] 오늘 0시 직후", calendar.date(byAdding: .minute, value: 5, to: day(0)) ?? now),
             // 어제
             ("[경계] 어제 23:55", calendar.date(byAdding: .minute, value: -5, to: day(0)) ?? now),
             ("[하루·내일]", daysAgo(1, hour: 21)),
             ("[기간·진행 중", daysAgo(1, hour: 10)),
             // 이번 주
+            ("[기간·날짜 없음]", daysAgo(2)),
             ("[기간·종료됨", daysAgo(3, hour: 15)),
             ("[기간·예정", daysAgo(3, hour: 9)),
             ("[기간·낮음", daysAgo(6)),
@@ -168,9 +181,16 @@ extension JournalDatabase {
             ("[작년·기간]", daysAgo(370)),
             ("[옛 글]", daysAgo(400))
         ]
+        // 선택한 날짜가 작성일과 다른 샘플. 나머지 하루 회고는 작성일과 같은 날로 맞춰,
+        // 카드에 날짜 줄이 나오지 않는 경우와 "날짜 회고"가 나오는 경우를 나눠서 확인한다.
+        let differentDatePrefixes = ["[선택일≠작성일]", "[선택일>작성일]"]
         for item in items {
             if let match = createdAtByTitlePrefix.first(where: { item.title.hasPrefix($0.prefix) }) {
                 item.createdAt = match.date
+            }
+            let keepsOwnDate = differentDatePrefixes.contains { item.title.hasPrefix($0) }
+            if !item.isPeriod, item.startDate != nil, !keepsOwnDate {
+                item.startDate = item.createdAt
             }
         }
         return items
