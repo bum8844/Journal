@@ -424,6 +424,6 @@ private extension JournalEditorView {
 //
 // [기간·사진]
 // - 날짜는 JournalPeriodPicker(value: $period), 사진은 JournalPhotoPicker(photoData: $photoData)를 쓴다.
-// - 저장 버튼은 period.isValid(시작일이 오늘 이후이거나 종료일이 시작일보다 빠르면 false)로도 막는다.
+// - 저장 버튼은 period.isValid(하루 회고의 날짜가 오늘 이후이거나 기간 회고의 종료일이 시작일보다 빠르면 false)로도 막는다.
 // - 날짜 규칙(B): 하루 회고도 선택한 날짜를 startDate에 저장하고 endDate는 비운다. 기간 회고는 startDate~endDate다.
 //   날짜가 없는 기존 글은 편집 화면에서 최초 작성일(createdAt)을 보여 주고, 저장하면 그 날짜가 startDate에 들어간다.
