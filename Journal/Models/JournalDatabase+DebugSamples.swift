@@ -14,7 +14,7 @@ import UIKit
 #endif
 
 extension JournalDatabase {
-    /// 확인용 샘플. 날짜는 실행한 날을 기준으로 정해서, 넣을 때마다 "진행 중", "종료됨"이 맞게 나온다.
+    /// 확인용 샘플. 날짜는 실행한 날을 기준으로 정해서, 넣을 때마다 "진행 중", "종료됨"과 목록 날짜 구간이 맞게 나온다.
     static func debugSamples(now: Date = .now) -> [JournalDatabase] {
         let calendar = Calendar.current
         func day(_ offset: Int) -> Date {
@@ -107,6 +107,27 @@ extension JournalDatabase {
         legacy.startDate = nil
         items.append(legacy)
 
+        // 목록 구간(작성일) 확인용: 선택한 날짜와 작성일이 다른 글, 자정 경계, 오래된 글
+        items.append(JournalDatabase(
+            title: "[선택일≠작성일] 열흘 전 일을 오늘 작성", content: "하루 회고의 선택한 날짜(startDate)와 작성일(createdAt)이 다른 글.",
+            category: "확인", tags: ["날짜"], format: .free,
+            isPeriod: false, startDate: day(-10), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[경계] 오늘 0시 직후 작성", content: "작성일이 오늘로 묶이는지 확인한다.",
+            category: "확인", tags: ["경계"], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[경계] 어제 23:55 작성", content: "작성일이 어제로 묶이는지 확인한다.",
+            category: "확인", tags: ["경계"], format: .free,
+            isPeriod: false, startDate: day(-1), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[작년·기간] 지난해 작성한 기간 회고", content: "지난해에 쓴 글. 구간 제목에 연도가 붙는지 확인한다.",
+            category: "확인", tags: ["작년"], format: .free,
+            isPeriod: true, startDate: day(-380), endDate: day(-370), importance: .low))
+
         #if canImport(UIKit)
         if let data = debugPhotoData() {
             items.append(JournalDatabase(
@@ -116,9 +137,41 @@ extension JournalDatabase {
         }
         #endif
 
-        // 최신순 정렬이 항상 같은 순서가 되도록 작성 시각을 1분씩 어긋나게 한다
-        for (index, item) in items.enumerated() {
-            item.createdAt = now.addingTimeInterval(-Double(index) * 60)
+        // 작성 시각(createdAt)을 여러 날에 걸쳐 나눠서, 목록의 날짜 구간(오늘·어제·이번 주·지난달·작년)을 확인한다.
+        // 제목 앞부분이 같은 글에 시각을 맞춰 준다. (오늘 글은 지금보다 앞선 시각으로 둬서 미래 시각이 되지 않게 한다)
+        func minutesAgo(_ minutes: Int) -> Date { now.addingTimeInterval(-Double(minutes) * 60) }
+        func daysAgo(_ days: Int, hour: Int = 12, minute: Int = 0) -> Date {
+            calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day(-days)) ?? day(-days)
+        }
+        let createdAtByTitlePrefix: [(prefix: String, date: Date)] = [
+            // 오늘 (같은 날 안에서 최신순이 맞는지)
+            ("[하루·자유]", minutesAgo(10)),
+            ("[사진 있음]", minutesAgo(30)),
+            ("[하루·4L]", minutesAgo(50)),
+            ("[선택일≠작성일]", minutesAgo(70)),
+            ("[경계] 오늘 0시 직후", calendar.date(byAdding: .minute, value: 5, to: day(0)) ?? now),
+            // 어제
+            ("[경계] 어제 23:55", calendar.date(byAdding: .minute, value: -5, to: day(0)) ?? now),
+            ("[하루·내일]", daysAgo(1, hour: 21)),
+            ("[기간·진행 중", daysAgo(1, hour: 10)),
+            // 이번 주
+            ("[기간·종료됨", daysAgo(3, hour: 15)),
+            ("[기간·예정", daysAgo(3, hour: 9)),
+            ("[기간·낮음", daysAgo(6)),
+            // 지난 주
+            ("[긴 글]", daysAgo(8, hour: 18)),
+            ("[태그 많음]", daysAgo(8, hour: 9)),
+            // 지난달
+            ("[분류 없음]", daysAgo(40)),
+            ("[AI 한마디 있음]", daysAgo(41)),
+            // 지난해
+            ("[작년·기간]", daysAgo(370)),
+            ("[옛 글]", daysAgo(400))
+        ]
+        for item in items {
+            if let match = createdAtByTitlePrefix.first(where: { item.title.hasPrefix($0.prefix) }) {
+                item.createdAt = match.date
+            }
         }
         return items
     }
