@@ -36,9 +36,13 @@ struct JournalCardView: View {
             }
 
             HStack {
-                Text(journal.displayDateString)
-                    .font(.subheadline)
-                    .foregroundStyle(JournalTheme.subText)
+                // 기간 회고(또는 작성일과 다른 날짜의 하루 회고)만 날짜를 보여 준다.
+                // 그 외에는 목록의 구간 제목이 작성일을 대신한다.
+                if let dateText = journal.listDateText {
+                    Text(dateText)
+                        .font(.subheadline)
+                        .foregroundStyle(JournalTheme.subText)
+                }
 
                 Spacer(minLength: 8)
 
