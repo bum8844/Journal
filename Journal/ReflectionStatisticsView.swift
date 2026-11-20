@@ -24,6 +24,7 @@ struct ReflectionStatisticsView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var statisticsNow = Date.now
     @State private var selectedCategory: String?
+    @State private var showsUntagged = false
 
     var body: some View {
         let selectedInterval = calendar.dateInterval(of: period.component, for: selectedDate)
@@ -78,9 +79,11 @@ struct ReflectionStatisticsView: View {
                 }
                 let statistics = ReflectionStatistics(entries: entries, interval: interval, calendar: calendar, now: statisticsNow)
 
-                ReflectionStatisticsCharts(statistics: statistics, calendar: calendar) { category in
-                    selectedCategory = category
-                }
+                ReflectionStatisticsCharts(
+                    statistics: statistics, calendar: calendar,
+                    onSelectCategory: { selectedCategory = $0 },
+                    onSelectUntagged: { showsUntagged = true }
+                )
             }
         }
         // 팀 공통 테마: 시스템 목록 배경을 숨기고 그라데이션 배경과 유리 카드 행을 사용합니다.
@@ -91,7 +94,12 @@ struct ReflectionStatisticsView: View {
         .navigationTitle("통계")
         .navigationDestination(item: $selectedCategory) { category in
             if let interval = selectedInterval {
-                categoryList(category, in: interval)
+                matchingList(title: JournalCategory.title(for: category), in: interval, category: category)
+            }
+        }
+        .navigationDestination(isPresented: $showsUntagged) {
+            if let interval = selectedInterval {
+                matchingList(title: "태그 없음", in: interval, withoutTags: true)
             }
         }
         .task {
@@ -112,15 +120,25 @@ struct ReflectionStatisticsView: View {
     }
 
     /// 통계와 같은 작성일 범위·카테고리 규칙으로 원본 회고를 보여 줍니다.
-    private func categoryList(_ category: String, in interval: DateInterval) -> some View {
-        let journals = reflections.filter {
+    private func matchingList(title: String, in interval: DateInterval,
+                              category: String? = nil, withoutTags: Bool = false) -> some View {
+        let periodJournals = reflections.filter {
             interval.start <= $0.createdAt && $0.createdAt < interval.end
-                && JournalCategory.normalized($0.category) == category
-        }.sorted { $0.createdAt > $1.createdAt }
+        }
+        let journals = JournalDatabase.filter(periodJournals, category: category, tags: [], withoutTags: withoutTags)
+            .sorted { $0.createdAt > $1.createdAt }
 
         return List {
+            Text(periodTitle(for: interval))
+                .font(.subheadline)
+                .foregroundStyle(JournalTheme.subText)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             if journals.isEmpty {
                 Text("이 기간에 해당하는 회고가 없어요.")
+                    .foregroundStyle(JournalTheme.subText)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
             ForEach(journals) { journal in
                 NavigationLink {
@@ -135,7 +153,7 @@ struct ReflectionStatisticsView: View {
         .scrollContentBackground(.hidden)
         .journalBackground()
         .foregroundStyle(JournalTheme.text)
-        .navigationTitle(JournalCategory.title(for: category))
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
 

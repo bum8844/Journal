@@ -6,6 +6,7 @@ struct ReflectionStatisticsCharts: View {
     let statistics: ReflectionStatistics
     let calendar: Calendar
     let onSelectCategory: (String) -> Void
+    let onSelectUntagged: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
 
     var body: some View {
@@ -30,6 +31,33 @@ struct ReflectionStatisticsCharts: View {
             }
             .listRowBackground(JournalTheme.glassFill)
         }
+
+        Section {
+            Button {
+                onSelectCategory(JournalCategory.unclassified)
+            } label: {
+                LabeledContent("분류없음") {
+                    HStack {
+                        Text("\(statistics.unclassifiedCount)건")
+                        Image(systemName: "chevron.right").font(.caption)
+                    }
+                }
+            }
+            Button(action: onSelectUntagged) {
+                LabeledContent("태그 없음") {
+                    HStack {
+                        Text("\(statistics.untaggedCount)건")
+                        Image(systemName: "chevron.right").font(.caption)
+                    }
+                }
+            }
+        } header: {
+            Text("분류·태그")
+        } footer: {
+            Text("둘 다 없는 회고는 각 항목에 포함되며, 전체 건수에서는 한 번만 세어요.")
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(JournalTheme.glassFill)
 
         Section("기간 회고 일정") {
             if statistics.periodCount == 0 {
