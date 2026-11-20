@@ -94,12 +94,16 @@ struct ReflectionStatisticsView: View {
         .navigationTitle("통계")
         .navigationDestination(item: $selectedCategory) { category in
             if let interval = selectedInterval {
-                matchingList(title: JournalCategory.title(for: category), in: interval, category: category)
+                // 통계의 "미등록 > 분류"에서 들어온 목록이라 제목도 같은 말로 맞춘다
+                matchingList(
+                    title: category == JournalCategory.unclassified ? "분류 미등록" : JournalCategory.title(for: category),
+                    in: interval, category: category
+                )
             }
         }
         .navigationDestination(isPresented: $showsUntagged) {
             if let interval = selectedInterval {
-                matchingList(title: "태그 없음", in: interval, withoutTags: true)
+                matchingList(title: "태그 미등록", in: interval, withoutTags: true)
             }
         }
         .task {
@@ -129,25 +133,34 @@ struct ReflectionStatisticsView: View {
             .sorted { $0.createdAt > $1.createdAt }
 
         return List {
-            Text(periodTitle(for: interval))
-                .font(.subheadline)
-                .foregroundStyle(JournalTheme.subText)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+            // 글이 있으면 작성일 구간 제목이 기간을 알려 주므로 기간 제목 줄을 따로 두지 않는다.
+            // 글이 없을 때만 어느 기간인지 문구에 함께 적는다.
             if journals.isEmpty {
-                Text("이 기간에 해당하는 회고가 없어요.")
+                Text("\(periodTitle(for: interval))에 해당하는 회고가 없어요.")
                     .foregroundStyle(JournalTheme.subText)
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
             }
-            ForEach(journals) { journal in
-                NavigationLink {
-                    JournalDetailView(journal: journal)
-                } label: {
-                    JournalCardView(journal: journal)
+            // 하루 회고 카드에는 날짜가 없어서, 목록과 같은 작성일 구간으로 나눠 언제 쓴 글인지 알 수 있게 한다
+            ForEach(JournalDaySection.sections(from: journals)) { section in
+                Section {
+                    Text(section.title(now: statisticsNow, calendar: calendar))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(JournalTheme.subText)
+                        .accessibilityAddTraits(.isHeader)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+
+                    ForEach(section.journals) { journal in
+                        NavigationLink {
+                            JournalDetailView(journal: journal)
+                        } label: {
+                            JournalCardView(journal: journal)
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    }
                 }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
             }
         }
         .scrollContentBackground(.hidden)
