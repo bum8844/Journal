@@ -20,6 +20,7 @@ struct JournalListView: View {
     @State private var searchText = ""
     @State private var selectedCategory: String?
     @State private var selectedTags: Set<String> = []
+    @State private var showsUntaggedOnly = false
     @State private var selectedJournal: JournalDatabase?
     // + 버튼을 누르면 새 회고 작성 화면으로 이동한다
     @State private var isAddingNew = false
@@ -32,7 +33,8 @@ struct JournalListView: View {
     // MARK: - 필터 후보 (목록에 있는 값에서 중복 없이 뽑는다)
 
     private var categories: [String] {
-        journals.map(\.category).filter { !$0.isEmpty }.uniqued()
+        // 빈 값과 예전 미분류 값은 분류없음 하나로 묶습니다.
+        journals.map { JournalCategory.normalized($0.category) }.uniqued()
     }
 
     private var tags: [String] {
@@ -45,13 +47,14 @@ struct JournalListView: View {
         let keyword = searchText.trimmingCharacters(in: .whitespaces)
 
         // 카테고리/태그 필터는 C의 규칙을 쓴다 (선택한 태그를 모두 가진 글만 남는다)
-        let filtered = JournalDatabase.filter(journals, category: selectedCategory, tags: selectedTags)
+        let filtered = JournalDatabase.filter(journals, category: selectedCategory, tags: selectedTags,
+                                              withoutTags: showsUntaggedOnly)
         guard !keyword.isEmpty else { return filtered }
 
         return filtered.filter { journal in
             journal.title.localizedCaseInsensitiveContains(keyword)
                 || journal.content.localizedCaseInsensitiveContains(keyword)
-                || journal.category.localizedCaseInsensitiveContains(keyword)
+                || JournalCategory.title(for: journal.category).localizedCaseInsensitiveContains(keyword)
                 || journal.tags.contains { $0.localizedCaseInsensitiveContains(keyword) }
         }
     }
@@ -140,6 +143,7 @@ struct JournalListView: View {
             JournalFilterBar(
                 selectedCategory: $selectedCategory,
                 selectedTags: $selectedTags,
+                showsUntaggedOnly: $showsUntaggedOnly,
                 categories: categories,
                 tags: tags,
                 horizontalInset: 20
@@ -167,10 +171,26 @@ struct JournalListView: View {
                     }
                 }
             }
+
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.interactively)
+        .overlay {
+            if filteredJournals.isEmpty {
+                // 첫 회고 안내와 같은 화면 구성으로, 검색·필터 결과가 비어 있음을 알립니다.
+                ContentUnavailableView {
+                    Label("기록을 찾을 수 없어요", systemImage: "book.closed")
+                } description: {
+                    Text(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                         ? "필터를 바꾸거나 해제해 보세요."
+                         : "다른 검색어를 입력하세요.")
+                }
+                .foregroundStyle(JournalTheme.text)
+                // 안내가 검색창이나 필터 터치를 가로막지 않도록 합니다.
+                .allowsHitTesting(false)
+            }
+        }
         // 검색창은 위에 고정된다. 스크롤하면 목록이 검색창 뒤로 지나가며 비쳐 보인다
         .safeAreaInset(edge: .top, spacing: 0) {
             JournalSearchBar(text: $searchText, isFocused: $isSearchFocused)

@@ -323,7 +323,7 @@ struct JournalEditorView: View {
         let target = journal ?? JournalDatabase(title: "", content: "", category: "", tags: [])
 
         target.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.category = JournalDatabase.normalizedCategory(category) ?? ""
+        target.category = JournalDatabase.normalizedCategory(category) ?? JournalCategory.unclassified
         target.tags = tags
         let originalFormat = journal?.effectiveFormat
         let originalAnswers = journal.map { Self.savedAnswers(in: $0, format: format) }
