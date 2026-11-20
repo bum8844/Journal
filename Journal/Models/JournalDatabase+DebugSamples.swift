@@ -139,6 +139,75 @@ extension JournalDatabase {
             category: "확인", tags: ["날짜"], format: .free,
             isPeriod: true, startDate: nil, endDate: nil, importance: .normal))
 
+        // 분류 없음, 태그 없음 확인용: 여러 날짜에 흩어 두어서, 어느 날짜에서도 필터로 모아 볼 수 있는지 확인한다.
+        // (카테고리가 빈 값이면 화면에는 "분류없음"으로 보인다)
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·오늘] 분류도 태그도 없는 글", content: "오늘 쓴 글. 카테고리와 태그가 모두 비어 있다.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그O·어제] 분류만 없는 글", content: "어제 쓴 글. 카테고리는 비어 있고 태그는 있다.",
+            category: "", tags: ["메모"], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류O·태그X·3일 전] 태그만 없는 글", content: "3일 전에 쓴 글. 카테고리는 있고 태그는 없다.",
+            category: "운동", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·9일 전] 분류도 태그도 없는 글", content: "9일 전에 쓴 글.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류O·태그X·지난달] 태그만 없는 글", content: "지난달에 쓴 글.",
+            category: "개발", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·작년] 분류도 태그도 없는 글", content: "지난해에 쓴 글. 구간 제목에 연도가 붙는다.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[미분류 값·12일 전] 예전 이름으로 저장된 글", content: "카테고리가 직접 입력한 미분류인 옛 글. 분류없음으로 묶이는지 확인한다.",
+            category: "미분류", tags: ["옛글"], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        // 어제와 저번 주(월~일, 통계의 주간 기준)에 분류 없음, 태그 없음이 있는 경우.
+        // 주간 통계에서 이전 기간으로 이동해도 분류·태그 집계가 잡히는지 확인한다.
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·어제] 어제 쓴 분류도 태그도 없는 글", content: "어제 쓴 글. 분류와 태그가 모두 없다.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·저번 주 월] 저번 주 월요일 글", content: "저번 주 월요일에 쓴 글.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그O·저번 주 수] 저번 주 수요일 글", content: "저번 주 수요일에 쓴 글. 분류만 없다.",
+            category: "", tags: ["회고"], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류O·태그X·저번 주 금] 저번 주 금요일 글", content: "저번 주 금요일에 쓴 글. 태그만 없다.",
+            category: "공부", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류X·태그X·저번 주 일] 저번 주 일요일 글", content: "저번 주 일요일에 쓴 글. 주의 마지막 날 경계.",
+            category: "", tags: [], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
+        items.append(JournalDatabase(
+            title: "[분류O·태그O·저번 주 수] 분류와 태그가 모두 있는 글", content: "저번 주 수요일에 쓴 글. 비교용.",
+            category: "개발", tags: ["swift"], format: .free,
+            isPeriod: false, startDate: day(0), importance: .normal))
+
         #if canImport(UIKit)
         if let data = debugPhotoData() {
             items.append(JournalDatabase(
@@ -154,6 +223,14 @@ extension JournalDatabase {
         func daysAgo(_ days: Int, hour: Int = 12, minute: Int = 0) -> Date {
             calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day(-days)) ?? day(-days)
         }
+        // 통계의 주간 기준(월요일 시작)으로 계산한 "저번 주". weekdayOffset 0 = 월요일, 6 = 일요일
+        var reportingCalendar = calendar
+        reportingCalendar.firstWeekday = 2
+        let thisWeekStart = reportingCalendar.dateInterval(of: .weekOfYear, for: now)?.start ?? day(0)
+        func lastWeek(_ weekdayOffset: Int, hour: Int = 12) -> Date {
+            let start = reportingCalendar.date(byAdding: .day, value: weekdayOffset - 7, to: thisWeekStart) ?? thisWeekStart
+            return reportingCalendar.date(bySettingHour: hour, minute: 0, second: 0, of: start) ?? start
+        }
         let createdAtByTitlePrefix: [(prefix: String, date: Date)] = [
             // 오늘 (같은 날 안에서 최신순이 맞는지)
             ("[하루·자유]", minutesAgo(10)),
@@ -162,23 +239,37 @@ extension JournalDatabase {
             ("[선택일≠작성일]", minutesAgo(70)),
             ("[선택일>작성일]", minutesAgo(90)),
             ("[경계] 오늘 0시 직후", calendar.date(byAdding: .minute, value: 5, to: day(0)) ?? now),
+            ("[분류X·태그X·오늘]", minutesAgo(15)),
             // 어제
             ("[경계] 어제 23:55", calendar.date(byAdding: .minute, value: -5, to: day(0)) ?? now),
+            ("[분류X·태그O·어제]", daysAgo(1, hour: 8)),
+            ("[분류X·태그X·어제]", daysAgo(1, hour: 15)),
             ("[하루·내일]", daysAgo(1, hour: 21)),
             ("[기간·진행 중", daysAgo(1, hour: 10)),
             // 이번 주
             ("[기간·날짜 없음]", daysAgo(2)),
+            ("[분류O·태그X·3일 전]", daysAgo(3, hour: 20)),
             ("[기간·종료됨", daysAgo(3, hour: 15)),
             ("[기간·예정", daysAgo(3, hour: 9)),
             ("[기간·낮음", daysAgo(6)),
-            // 지난 주
+            // 저번 주 (월~일)
+            ("[분류X·태그X·저번 주 월]", lastWeek(0)),
+            ("[분류X·태그O·저번 주 수]", lastWeek(2, hour: 10)),
+            ("[분류O·태그O·저번 주 수]", lastWeek(2, hour: 18)),
+            ("[분류O·태그X·저번 주 금]", lastWeek(4)),
+            ("[분류X·태그X·저번 주 일]", lastWeek(6, hour: 23)),
+            // 그 밖의 지난 글
+            ("[분류X·태그X·9일 전]", daysAgo(9)),
+            ("[미분류 값·12일 전]", daysAgo(12)),
             ("[긴 글]", daysAgo(8, hour: 18)),
             ("[태그 많음]", daysAgo(8, hour: 9)),
             // 지난달
+            ("[분류O·태그X·지난달]", daysAgo(35)),
             ("[분류 없음]", daysAgo(40)),
             ("[AI 한마디 있음]", daysAgo(41)),
             // 지난해
             ("[작년·기간]", daysAgo(370)),
+            ("[분류X·태그X·작년]", daysAgo(380)),
             ("[옛 글]", daysAgo(400))
         ]
         // 선택한 날짜가 작성일과 다른 샘플. 나머지 하루 회고는 작성일과 같은 날로 맞춰,
