@@ -20,7 +20,7 @@ struct JournalCardView: View {
 
                 Spacer(minLength: 8)
 
-                Text(journal.category)
+                Text(JournalCategory.title(for: journal.category))
                     .font(.footnote)
                     .foregroundStyle(JournalTheme.badgeText)
                     .padding(.horizontal, 12)
