@@ -33,28 +33,14 @@ struct ReflectionStatisticsCharts: View {
         }
 
         Section {
-            Button {
+            unregisteredRow("분류", count: statistics.unclassifiedCount) {
                 onSelectCategory(JournalCategory.unclassified)
-            } label: {
-                LabeledContent("분류없음") {
-                    HStack {
-                        Text("\(statistics.unclassifiedCount)건")
-                        Image(systemName: "chevron.right").font(.caption)
-                    }
-                }
             }
-            Button(action: onSelectUntagged) {
-                LabeledContent("태그 없음") {
-                    HStack {
-                        Text("\(statistics.untaggedCount)건")
-                        Image(systemName: "chevron.right").font(.caption)
-                    }
-                }
-            }
+            unregisteredRow("태그", count: statistics.untaggedCount, action: onSelectUntagged)
         } header: {
-            Text("분류·태그")
+            Text("미등록")
         } footer: {
-            Text("둘 다 없는 회고는 각 항목에 포함되며, 전체 건수에서는 한 번만 세어요.")
+            Text("분류와 태그가 모두 없는 글은 두 항목에 모두 포함돼요.\n전체 건수에는 한 번만 세어요.")
         }
         .buttonStyle(.plain)
         .listRowBackground(JournalTheme.glassFill)
@@ -112,6 +98,22 @@ struct ReflectionStatisticsCharts: View {
             }
         }
         .listRowBackground(JournalTheme.glassFill)
+    }
+
+    /// 미등록 항목 한 줄. 0건이면 연하게 보이고 누를 수 없다. 누르면 해당 글 목록으로 이동한다.
+    private func unregisteredRow(_ title: String, count: Int, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            LabeledContent(title) {
+                HStack {
+                    Text("\(count)건")
+                    if count > 0 {
+                        Image(systemName: "chevron.right").font(.caption)
+                    }
+                }
+            }
+        }
+        .disabled(count == 0)
+        .opacity(count == 0 ? 0.5 : 1)
     }
 
     // 같은 기간의 전체 회고를 기준으로 각 항목의 건수와 비중을 함께 표시합니다.
