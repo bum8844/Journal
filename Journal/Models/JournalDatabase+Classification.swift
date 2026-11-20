@@ -12,10 +12,7 @@ extension JournalDatabase {
 
     /// 태그 입력값을 정리합니다. 공백과 앞의 `#`을 제거하고, 빈 값이면 nil을 반환합니다.
     static func normalizedTag(_ raw: String) -> String? {
-        var text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        while text.hasPrefix("#") { text.removeFirst() }
-        text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return text.isEmpty ? nil : text
+        JournalTag.normalized(raw)
     }
 
     /// 기존 태그 뒤에 새 태그를 붙입니다. 입력이 비었거나 이미 있으면 그대로 돌려줍니다.
@@ -37,7 +34,7 @@ extension JournalDatabase {
         items.filter { item in
             let matchesCategory = category.map { JournalCategory.normalized($0) == JournalCategory.normalized(item.category) } ?? true
             let matchesTags = withoutTags
-                ? item.tags.allSatisfy { normalizedTag($0) == nil }
+                ? JournalTag.hasNone(item.tags)
                 : tags.isSubset(of: item.tags)
             return matchesCategory && matchesTags
         }
