@@ -9,6 +9,8 @@ import SwiftUI
 
 struct JournalCardView: View {
     let journal: JournalDatabase
+    // 태그가 없어도 같은 높이를 확보하고, 글자 크기에 맞춰 함께 늘립니다.
+    @ScaledMetric(relativeTo: .subheadline) private var tagLineHeight: CGFloat = 22
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -20,7 +22,7 @@ struct JournalCardView: View {
 
                 Spacer(minLength: 8)
 
-                Text(journal.category)
+                Text(JournalCategory.title(for: journal.category))
                     .font(.footnote)
                     .foregroundStyle(JournalTheme.badgeText)
                     .padding(.horizontal, 12)
@@ -28,12 +30,12 @@ struct JournalCardView: View {
                     .background(Capsule().fill(JournalTheme.accent.opacity(0.15)))
             }
 
-            if !journal.tags.isEmpty {
-                Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
-                    .font(.subheadline)
-                    .foregroundStyle(JournalTheme.accent)
-                    .lineLimit(1)
-            }
+            Text(journal.tags.map { "#\($0)" }.joined(separator: " "))
+                .font(.subheadline)
+                .foregroundStyle(JournalTheme.accent)
+                .lineLimit(1)
+                .frame(height: tagLineHeight, alignment: .leading)
+                .accessibilityHidden(journal.tags.isEmpty)
 
             HStack {
                 // 기간 회고(또는 작성일과 다른 날짜의 하루 회고)만 날짜를 보여 준다.

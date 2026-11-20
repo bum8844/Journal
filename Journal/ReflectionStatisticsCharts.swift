@@ -5,6 +5,8 @@ import SwiftUI
 struct ReflectionStatisticsCharts: View {
     let statistics: ReflectionStatistics
     let calendar: Calendar
+    let onSelectCategory: (String) -> Void
+    let onSelectUntagged: () -> Void
     @Environment(\.dynamicTypeSize) private var textSize
 
     var body: some View {
@@ -30,17 +32,31 @@ struct ReflectionStatisticsCharts: View {
             .listRowBackground(JournalTheme.glassFill)
         }
 
+        Section {
+            unregisteredRow("분류", count: statistics.unclassifiedCount) {
+                onSelectCategory(JournalCategory.unclassified)
+            }
+            unregisteredRow("태그", count: statistics.untaggedCount, action: onSelectUntagged)
+        } header: {
+            Text("미등록")
+        } footer: {
+            Text("분류와 태그가 모두 없는 글은 두 항목에 모두 포함돼요.\n전체 건수에는 한 번만 세어요.")
+        }
+        .buttonStyle(.plain)
+        .listRowBackground(JournalTheme.glassFill)
+
         Section("기간 회고 일정") {
             if statistics.periodCount == 0 {
                 Text("이 기간에 작성한 기간 회고가 없어요.")
                     .foregroundStyle(JournalTheme.subText)
             } else {
+                countBar("예정", count: statistics.upcomingPeriodCount, total: statistics.periodCount)
                 countBar("진행 중", count: statistics.ongoingPeriodCount, total: statistics.periodCount)
                 countBar("종료", count: statistics.endedPeriodCount, total: statistics.periodCount)
                 if statistics.undatedPeriodCount > 0 {
                     LabeledContent("종료일 없음", value: "\(statistics.undatedPeriodCount)건")
                 }
-                Text("종료일이 지난 회고를 종료로 집계해요. 종료일 당일은 진행 중이에요.")
+                Text("시작일 전은 예정, 시작일부터 종료일까지는 진행 중이에요. 종료일이 지나면 종료로 집계해요.")
                     .font(.footnote)
                     .foregroundStyle(JournalTheme.subText)
             }
@@ -82,6 +98,22 @@ struct ReflectionStatisticsCharts: View {
             }
         }
         .listRowBackground(JournalTheme.glassFill)
+    }
+
+    /// 미등록 항목 한 줄. 0건이면 연하게 보이고 누를 수 없다. 누르면 해당 글 목록으로 이동한다.
+    private func unregisteredRow(_ title: String, count: Int, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            LabeledContent(title) {
+                HStack {
+                    Text("\(count)건")
+                    if count > 0 {
+                        Image(systemName: "chevron.right").font(.caption)
+                    }
+                }
+            }
+        }
+        .disabled(count == 0)
+        .opacity(count == 0 ? 0.5 : 1)
     }
 
     // 같은 기간의 전체 회고를 기준으로 각 항목의 건수와 비중을 함께 표시합니다.
@@ -189,19 +221,29 @@ struct ReflectionStatisticsCharts: View {
             .frame(height: 140)
             .accessibilityHidden(true)
 
-            ForEach(slices.indices, id: \.self) { index in
-                LabeledContent {
-                    Text("\(slices[index].count)건")
+            // 파이는 상위 다섯 개와 그 외로 묶되, 목록은 모든 카테고리를 열 수 있게 합니다.
+            ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
+                Button {
+                    onSelectCategory(category.category)
                 } label: {
-                    Label {
-                        Text(slices[index].name)
-                    } icon: {
-                        Circle()
-                            .fill(colors[index])
-                            .frame(width: 9, height: 9)
-                            .accessibilityHidden(true)
+                    LabeledContent {
+                        HStack {
+                            Text("\(category.count)건")
+                            Image(systemName: "chevron.right").font(.caption)
+                        }
+                    } label: {
+                        Label {
+                            Text(category.name)
+                        } icon: {
+                            Circle()
+                                .fill(colors[min(index, colors.count - 1)])
+                                .frame(width: 9, height: 9)
+                                .accessibilityHidden(true)
+                        }
                     }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibilityElement(children: .combine)
             }
         }
