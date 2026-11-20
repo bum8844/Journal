@@ -47,6 +47,7 @@ struct ReflectionStatistics {
     let reflectionCount: Int
     let periodCount: Int
     let photoCount: Int
+    let untaggedCount: Int
     let endedPeriodCount: Int
     let ongoingPeriodCount: Int
     let upcomingPeriodCount: Int
@@ -58,6 +59,10 @@ struct ReflectionStatistics {
     let dailyCounts: [DailyReflectionCount]
     let categoryCounts: [CategoryCount]
 
+    var unclassifiedCount: Int {
+        categoryCounts.first { $0.category == JournalCategory.unclassified }?.count ?? 0
+    }
+
     /// 시작 시각을 포함하고 끝 시각을 제외해 인접한 주나 달에 같은 기록을 두 번 세지 않습니다.
     init(entries: [StatisticsEntry], interval: DateInterval, calendar: Calendar, now: Date = .now) {
         let periodEntries = entries.filter {
@@ -68,6 +73,8 @@ struct ReflectionStatistics {
         // 기간에 걸친 날짜 수와 무관하게 회고 한 개를 한 건으로 셉니다.
         periodCount = periodEntries.count(where: \.isPeriod)
         photoCount = periodEntries.count(where: \.hasPhoto)
+        // 분류없음과 겹쳐도 전체 회고 건수에서는 한 번만 셉니다.
+        untaggedCount = periodEntries.count { JournalTag.hasNone($0.tags) }
 
         // 시작 전은 예정, 시작일부터 종료일 당일까지는 진행 중으로 구분합니다.
         // 종료는 작업 완료 판정과 별개이며, 시작일이 없는 옛 글은 작성일을 대신 사용합니다.
@@ -123,8 +130,8 @@ struct ReflectionStatistics {
         var counts: [String: Int] = [:]
         for entry in periodEntries {
             // 앞뒤 공백을 제거하고 Set으로 중복을 없애 같은 글의 동일 태그를 한 번만 셉니다.
-            let tags = Set(entry.tags.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) })
-            for tag in tags where !tag.isEmpty {
+            let tags = Set(entry.tags.compactMap(JournalTag.normalized))
+            for tag in tags {
                 counts[tag, default: 0] += 1
             }
         }
