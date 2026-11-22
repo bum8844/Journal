@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마이로그 앱 아이콘 · 커버 시안</title>
+<style>
+  :root {
+    --text: #2d2347; --sub: #6f6590; --accent: #7c4dff;
+    --card: rgba(255,255,255,.62); --border: rgba(255,255,255,.9);
+    --font: -apple-system, "SF Pro Rounded", "SF Pro Text", "Apple SD Gothic Neo", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font); color: var(--text); line-height: 1.55;
+    background: linear-gradient(160deg, #e8d9ff 0%, #ffd9ec 55%, #ffe9d6 100%) fixed;
+    padding: 48px 24px 96px;
+  }
+  main { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 34px; font-weight: 800; letter-spacing: -.5px; }
+  h2 { font-size: 22px; font-weight: 800; margin: 56px 0 6px; }
+  .lead { color: var(--sub); margin-top: 8px; max-width: 760px; }
+  .sub { color: var(--sub); font-size: 14px; margin-bottom: 18px; max-width: 760px; }
+  .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 28px;
+    padding: 28px; box-shadow: 0 8px 24px rgba(124,77,255,.12);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  }
+
+  /* 아이콘 공통: 시스템이 씌우는 둥근 사각형 마스크를 흉내 낸다 (실제 곡선과는 약간 다름) */
+  .icon { aspect-ratio: 1; border-radius: 22.37%; overflow: hidden; background: #ddd;
+    box-shadow: 0 10px 28px rgba(45,35,71,.22), 0 1px 0 rgba(255,255,255,.5) inset; flex: none; }
+  .icon svg { display: block; width: 100%; height: 100%; }
+
+  /* 시안 3종 */
+  .options { display: grid; gap: 20px; }
+  .option { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: center; }
+  .option h3 { font-size: 18px; margin-bottom: 4px; }
+  .option p { color: var(--sub); font-size: 14px; }
+  .variants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  figure { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  figure .icon { width: 100%; max-width: 180px; }
+  figcaption { font-size: 12.5px; color: var(--sub); text-align: center; }
+  .raw { border-radius: 0; box-shadow: 0 0 0 1px rgba(45,35,71,.12); }
+
+  /* 선택 도구 */
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 14px 0 22px; }
+  .toolbar b { font-size: 13px; color: var(--sub); margin-right: 4px; }
+  .seg { display: inline-flex; background: rgba(255,255,255,.55); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px; }
+  .seg button { font: inherit; font-size: 14px; border: 0; background: none; color: var(--sub);
+    padding: 7px 16px; border-radius: 999px; cursor: pointer; }
+  .seg button.on { background: #fff; color: var(--accent); font-weight: 700; box-shadow: 0 2px 8px rgba(124,77,255,.18); }
+
+  /* 크기 */
+  .sizes { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+  .sizes div { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--sub); }
+
+  /* 홈 화면 목업 */
+  .stage { display: flex; gap: 36px; flex-wrap: wrap; justify-content: center; }
+  .phone { width: 300px; height: 620px; border-radius: 48px; padding: 14px; background: #111;
+    box-shadow: 0 24px 48px rgba(0,0,0,.28); }
+  .screen { width: 100%; height: 100%; border-radius: 36px; overflow: hidden; padding: 64px 18px 18px;
+    position: relative; }
+  .screen.light { background: linear-gradient(170deg, #cfe3ff, #f3d9ff 60%, #ffe6d2); }
+  .screen.dark  { background: linear-gradient(170deg, #1a2140, #2a1c4a 60%, #3a2036); }
+  .screen .time { position: absolute; top: 20px; left: 0; right: 0; text-align: center; font-size: 15px; font-weight: 600; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px 12px; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10.5px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+  .app .icon { width: 100%; box-shadow: 0 3px 8px rgba(0,0,0,.22); }
+  .ph { background: var(--c); }
+  .dock { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 84px; border-radius: 30px;
+    background: rgba(255,255,255,.28); backdrop-filter: blur(16px); display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 12px; }
+
+  /* 커버 */
+  .covers { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
+  .launch { width: 300px; aspect-ratio: 390 / 844; border-radius: 40px; overflow: hidden; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    box-shadow: 0 18px 40px rgba(45,35,71,.25); }
+  .launch .icon { width: 96px; border-radius: 22.37%; }
+  .brand { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+  .tag { font-size: 13.5px; opacity: .72; text-align: center; max-width: 200px; }
+  .launch .foot { position: absolute; bottom: 26px; font-size: 11.5px; opacity: .5; }
+  .theme-light { background: linear-gradient(160deg, #e8d9ff 0%, #ffd9ec 55%, #ffe9d6 100%); color: #2d2347; }
+  .theme-dark  { background: linear-gradient(160deg, #1a1433 0%, #2c1a45 55%, #3a2036 100%); color: #f1ebff; }
+
+  .wide { width: 100%; aspect-ratio: 16 / 9; border-radius: 28px; position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 0 6%;
+    box-shadow: 0 18px 40px rgba(45,35,71,.2); }
+  .wide .left { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .wide .left .icon { width: 17%; min-width: 64px; max-width: 110px; }
+  .wide .brand { font-size: clamp(26px, 4vw, 48px); }
+  .wide .tag { text-align: left; max-width: 320px; font-size: clamp(12px, 1.5vw, 17px); }
+  .stack { position: relative; height: 80%; }
+  .glass { position: absolute; left: 0; right: 0; border-radius: 22px; padding: 16px 20px;
+    background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.85);
+    box-shadow: 0 10px 28px rgba(124,77,255,.18); backdrop-filter: blur(14px); }
+  .theme-dark .glass { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+  .glass b { display: block; font-size: clamp(13px, 1.6vw, 18px); }
+  .glass span { font-size: clamp(11px, 1.2vw, 14px); opacity: .7; }
+  .chip { display: inline-block; font-size: clamp(10px, 1.1vw, 13px); padding: 2px 10px; border-radius: 999px;
+    background: rgba(124,77,255,.16); color: #5a2fd6; margin-top: 6px; margin-right: 6px; }
+  .theme-dark .chip { background: rgba(143,105,255,.28); color: #cdbbff; }
+  .g1 { top: 2%; } .g2 { top: 34%; left: 6%; right: -4%; } .g3 { top: 66%; right: 6%; left: -2%; }
+
+  /* 체크 표 */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(45,35,71,.1); vertical-align: top; }
+  th { color: var(--sub); font-weight: 600; font-size: 13px; }
+  .ok { color: #1c8a57; font-weight: 700; white-space: nowrap; }
+  .warn { color: #b8741a; font-weight: 700; white-space: nowrap; }
+  a { color: var(--accent); }
+  .note { font-size: 13px; color: var(--sub); margin-top: 14px; }
+  @media (max-width: 860px) {
+    .option { grid-template-columns: 1fr; } .covers { grid-template-columns: 1fr; }
+    .launch { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>마이로그 앱 아이콘 · 커버 시안</h1>
+  <p class="lead">앱 시안의 글래스 그라데이션(라벤더, 핑크, 피치)과 보라색 강조색(<code>#7C4DFF</code>)을 바탕으로,
+    Apple의 앱 아이콘 가이드에 맞춰 단순한 도형 하나로 만든 3가지 안입니다. 이 파일은 미리보기용이고, 최종 파일(1024×1024 PNG 등)은 선택한 안으로 따로 내보냅니다.</p>
+
+  <!-- 1. 시안 3종 -->
+  <h2>1. 아이콘 시안 3종</h2>
+  <p class="sub">왼쪽은 시스템이 모서리를 씌우기 전의 원본(정사각형 1024×1024), 오른쪽은 기본·다크·틴트 모습입니다. 틴트는 시스템이 만들어 주는 모습을 흉내 낸 예시입니다.</p>
+  <div class="options" id="options"></div>
+
+  <!-- 2. 선택 도구 -->
+  <h2>2. 크기와 홈 화면에서 보기</h2>
+  <p class="sub">안을 골라 작은 크기에서도 알아볼 수 있는지, 홈 화면에서 어떻게 보이는지 확인해 보세요.</p>
+  <div class="toolbar">
+    <b>시안</b>
+    <div class="seg" id="segOpt">
+      <button data-opt="A" class="on">A 글래스 페이지</button>
+      <button data-opt="B">B 겹친 원</button>
+      <button data-opt="C">C M 모노그램</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="sizes" id="sizes"></div>
+  </div>
+  <div class="panel" style="margin-top:20px">
+    <div class="stage">
+      <div class="phone"><div class="screen light" id="homeLight"></div></div>
+      <div class="phone"><div class="screen dark" id="homeDark"></div></div>
+    </div>
+  </div>
+
+  <!-- 3. 커버 -->
+  <h2>3. 앱 커버</h2>
+  <p class="sub">앱을 켰을 때 보이는 시작 화면(왼쪽)과, 소개 자료나 README에 쓰는 가로형 커버(오른쪽)입니다. 문구는 임시 예시입니다. 위에서 고른 시안이 함께 바뀝니다.</p>
+  <div class="toolbar">
+    <b>화면 모드</b>
+    <div class="seg" id="segMode">
+      <button data-mode="light" class="on">라이트</button>
+      <button data-mode="dark">다크</button>
+    </div>
+  </div>
+  <div class="covers panel">
+    <div class="launch theme-light" id="launch">
+      <div class="icon" data-sel="1"></div>
+      <div class="brand">마이로그</div>
+      <div class="tag">오늘을 돌아보는 가장 가벼운 방법</div>
+      <div class="foot">Journal</div>
+    </div>
+    <div class="wide theme-light" id="wide">
+      <div class="left">
+        <div class="icon" data-sel="1"></div>
+        <div class="brand">마이로그</div>
+        <div class="tag">KPT, 4L, 자유 형식으로<br>하루와 한 주를 기록하고 돌아보세요.</div>
+      </div>
+      <div class="stack">
+        <div class="glass g1"><b>첫 팀 회의 날</b><span>11월 16일 · 자유</span><br><i class="chip">업무</i><i class="chip">#회고</i></div>
+        <div class="glass g2"><b>Fork 연결 성공</b><span>11월 13일 · KPT</span><br><i class="chip">교육</i><i class="chip">#swift</i></div>
+        <div class="glass g3"><b>Preview 멈춤 해결</b><span>11월 10일 · 4L</span><br><i class="chip">할일</i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 가이드 점검 -->
+  <h2>4. Apple 가이드 점검</h2>
+  <p class="sub">출처: <a href="https://developer.apple.com/design/human-interface-guidelines/app-icons" target="_blank" rel="noopener">Apple Human Interface Guidelines · App icons</a></p>
+  <div class="panel">
+    <table>
+      <tr><th>가이드 내용</th><th>이 시안</th></tr>
+      <tr><td>iOS·iPadOS 아이콘은 1024×1024 정사각형이고, 둥근 모서리는 시스템이 씌운다</td><td><span class="ok">반영</span> 원본은 모서리 없이 정사각형. 위의 둥근 모양은 미리보기용 마스크</td></tr>
+      <tr><td>배경은 꽉 찬 불투명 레이어. 그라데이션도 가능</td><td><span class="ok">반영</span> 세 안 모두 투명 영역 없는 꽉 찬 그라데이션</td></tr>
+      <tr><td>핵심 요소는 가운데에 둔다 (마스크로 잘리지 않도록)</td><td><span class="ok">반영</span> 중요한 도형은 중앙 영역 안에 배치</td></tr>
+      <tr><td>전경은 크고 단순한 도형. 가장자리가 번지지 않게. 겹친 도형과 반투명으로 깊이를 준다</td><td><span class="ok">반영</span> A, B는 겹친 도형과 반투명, 가장자리는 선명하게</td></tr>
+      <tr><td>글자와 가는 선은 시스템 글래스 효과가 약하게 적용된다</td><td><span class="warn">주의</span> C(M 모노그램)는 글자 모양이라 효과가 약할 수 있음. A의 선은 굵게 처리</td></tr>
+      <tr><td>검정 배경은 피하고, 다크 아이콘은 라이트 아이콘을 바탕으로 과하게 밝지 않게</td><td><span class="ok">반영</span> 다크는 짙은 보라 계열(앱 다크 테마 색)이고 도형 구성은 동일</td></tr>
+      <tr><td>기본, 다크, 클리어, 틴트에서 아이콘의 핵심 모양을 바꾸지 않는다</td><td><span class="ok">반영</span> 세 모드 모두 같은 도형. 틴트는 시스템이 자동 생성해도 됨</td></tr>
+    </table>
+    <p class="note">앱 안의 색상(<code>JournalTheme</code>)과 같은 값을 썼습니다: 라이트 배경 #E8D9FF · #FFD9EC · #FFE9D6, 다크 배경 #1A1433 · #2C1A45 · #3A2036, 강조색 라이트 #7C4DFF · 다크 #8F69FF.
+      모서리 곡선은 CSS 근사값이라 실제 iOS 곡선과 미세하게 다를 수 있습니다.</p>
+  </div>
+</main>
+
+<script>
+/* ---------- 아이콘 SVG 생성 (viewBox 1024) ---------- */
+let uid = 0;
+const P = {
+  light: { bg: ["#E8D9FF", "#FFD9EC", "#FFE9D6"], card: "rgba(255,255,255,.62)", edge: "rgba(255,255,255,.92)",
+           a1: "#A98BFF", a2: "#7C4DFF", shadow: "rgba(124,77,255,.28)", glass: "rgba(255,255,255,.5)",
+           cBg: ["#A98BFF", "#7C4DFF"], mono: "#ffffff", halo: "rgba(255,255,255,.16)", haloEdge: "rgba(255,255,255,.4)" },
+  dark:  { bg: ["#1A1433", "#2C1A45", "#3A2036"], card: "rgba(255,255,255,.12)", edge: "rgba(255,255,255,.3)",
+           a1: "#B79CFF", a2: "#8F69FF", shadow: "rgba(0,0,0,.4)", glass: "rgba(255,255,255,.14)",
+           cBg: ["#5B3FD0", "#3A2790"], mono: "rgba(255,255,255,.92)", halo: "rgba(255,255,255,.1)", haloEdge: "rgba(255,255,255,.26)" },
+  tint:  { bg: ["#323238", "#2A2A30", "#222228"], card: "rgba(255,255,255,.14)", edge: "rgba(255,255,255,.32)",
+           a1: "#E6DCFF", a2: "#C9B8FF", shadow: "rgba(0,0,0,.45)", glass: "rgba(255,255,255,.18)",
+           cBg: ["#34343A", "#26262C"], mono: "#D8CCFF", halo: "rgba(255,255,255,.08)", haloEdge: "rgba(255,255,255,.22)" }
+};
+
+function icon(opt, mode) {
+  const c = P[mode], id = "g" + (++uid);
+  const defs = `
+    <linearGradient id="${id}bg" x1=".15" y1="0" x2=".85" y2="1">
+      <stop offset="0" stop-color="${c.bg[0]}"/><stop offset=".55" stop-color="${c.bg[1] || c.bg[0]}"/><stop offset="1" stop-color="${c.bg[2] || c.bg[1]}"/>
+    </linearGradient>
+    <linearGradient id="${id}ac" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${c.a1}"/><stop offset="1" stop-color="${c.a2}"/>
+    </linearGradient>
+    <linearGradient id="${id}cb" x1=".1" y1="0" x2=".9" y2="1">
+      <stop offset="0" stop-color="${c.cBg[0]}"/><stop offset="1" stop-color="${c.cBg[1]}"/>
+    </linearGradient>
+    <filter id="${id}sh" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="26" stdDeviation="30" flood-color="${c.shadow}"/>
+    </filter>`;
+  let body = "";
+  if (opt === "A") {                       // 글래스 페이지 + 북마크 리본
+    body = `
+      <rect width="1024" height="1024" fill="url(#${id}bg)"/>
+      <rect x="232" y="186" width="560" height="652" rx="124" fill="${c.card}" stroke="${c.edge}" stroke-width="6" filter="url(#${id}sh)"/>
+      <path d="M520 186H648V500L584 446L520 500Z" fill="url(#${id}ac)"/>
+      <rect x="338" y="594" width="348" height="60" rx="30" fill="url(#${id}ac)"/>
+      <rect x="338" y="712" width="210" height="60" rx="30" fill="url(#${id}ac)" opacity=".85"/>`;
+  } else if (opt === "B") {                // 겹친 원 (해와 달 / 하루를 돌아봄)
+    body = `
+      <rect width="1024" height="1024" fill="url(#${id}bg)"/>
+      <circle cx="414" cy="470" r="262" fill="url(#${id}ac)" filter="url(#${id}sh)"/>
+      <circle cx="622" cy="586" r="240" fill="${c.glass}" stroke="${c.edge}" stroke-width="8"/>`;
+  } else {                                 // M 모노그램
+    body = `
+      <rect width="1024" height="1024" fill="url(#${id}cb)"/>
+      <circle cx="512" cy="512" r="318" fill="${c.halo}" stroke="${c.haloEdge}" stroke-width="6"/>
+      <polyline points="318,712 318,318 512,556 706,318 706,712" fill="none" stroke="${c.mono}" stroke-width="124" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  return `<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="마이로그 아이콘 ${opt}"><defs>${defs}</defs>${body}</svg>`;
+}
+
+/* ---------- 시안 3종 ---------- */
+const info = {
+  A: ["A · 글래스 페이지", "앱 시안의 반투명 카드를 그대로 가져오고 북마크 리본으로 \"기록\"을 표현했습니다. 앱 화면과 가장 닮은 안입니다."],
+  B: ["B · 겹친 원", "보라색 원과 반투명 유리 원이 겹친 가장 단순한 안입니다. 하루를 돌아보는 해와 달의 이미지이고, 작은 크기에서도 형태가 또렷합니다."],
+  C: ["C · M 모노그램", "보라색 배경에 굵은 M(마이로그)을 올린 안입니다. 대비가 가장 강하지만 글자 모양이라 시스템 글래스 효과가 약할 수 있습니다."]
+};
+const opts = document.getElementById("options");
+for (const k of ["A", "B", "C"]) {
+  opts.insertAdjacentHTML("beforeend", `
+    <div class="panel option">
+      <figure><div class="icon raw" style="width:100%;max-width:200px">${icon(k, "light")}</div><figcaption>원본 1024×1024<br>(모서리는 시스템이 적용)</figcaption></figure>
+      <div>
+        <h3>${info[k][0]}</h3><p>${info[k][1]}</p>
+        <div class="variants" style="margin-top:18px">
+          <figure><div class="icon">${icon(k, "light")}</div><figcaption>기본</figcaption></figure>
+          <figure><div class="icon">${icon(k, "dark")}</div><figcaption>다크</figcaption></figure>
+          <figure><div class="icon">${icon(k, "tint")}</div><figcaption>틴트 (예시)</figcaption></figure>
+        </div>
+      </div>
+    </div>`);
+}
+
+/* ---------- 선택 상태에 따라 바뀌는 부분 ---------- */
+const state = { opt: "A", mode: "light" };
+const placeholders = [["메모","#f6c445"],["사진","#ff8fa3"],["날씨","#6ab7ff"],["시계","#444"],["지도","#6fd08c"],["음악","#ff6b6b"],["책","#ffa94d"],["건강","#ff7eb6"]];
+
+function home(el, mode) {
+  const apps = placeholders.slice(0, 7).map(([n, c]) =>
+    `<div class="app"><div class="icon ph" style="--c:${c}"></div>${n}</div>`);
+  apps.splice(2, 0, `<div class="app"><div class="icon">${icon(state.opt, mode)}</div>마이로그</div>`);
+  const dock = [["#6ab7ff"],["#6fd08c"],["#ffa94d"],["#9aa0a6"]].map(([c]) => `<div class="icon ph" style="--c:${c}"></div>`).join("");
+  el.innerHTML = `<div class="time">9:41</div><div class="grid">${apps.join("")}</div><div class="dock">${dock}</div>`;
+}
+
+function render() {
+  const o = state.opt;
+  document.getElementById("sizes").innerHTML = [[180,"180 (설정 화면 3x)"],[120,"120"],[87,"87 (설정)"],[60,"60 (홈)"],[40,"40 (알림)"],[29,"29 (설정 목록)"]]
+    .map(([s, l]) => `<div><div class="icon" style="width:${s}px">${icon(o, "light")}</div>${l}</div>`).join("") +
+    `<div><div class="icon" style="width:87px">${icon(o, "dark")}</div>다크 87</div>
+     <div><div class="icon" style="width:87px">${icon(o, "tint")}</div>틴트 87</div>`;
+  home(document.getElementById("homeLight"), "light");
+  home(document.getElementById("homeDark"), "dark");
+  document.querySelectorAll("[data-sel]").forEach(el => el.innerHTML = icon(o, state.mode === "dark" ? "dark" : "light"));
+  for (const id of ["launch", "wide"]) {
+    const el = document.getElementById(id);
+    el.classList.toggle("theme-light", state.mode === "light");
+    el.classList.toggle("theme-dark", state.mode === "dark");
+  }
+}
+document.getElementById("segOpt").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.opt = b.dataset.opt;
+  document.querySelectorAll("#segOpt button").forEach(x => x.classList.toggle("on", x === b));
+  render();
+});
+document.getElementById("segMode").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.mode = b.dataset.mode;
+  document.querySelectorAll("#segMode button").forEach(x => x.classList.toggle("on", x === b));
+  render();
+});
+render();
+</script>
+</body>
+</html>
