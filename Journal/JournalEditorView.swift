@@ -145,10 +145,28 @@ struct JournalEditorView: View {
         aiCommentInput == commentInput ? aiComment : nil
     }
 
+    private var canGenerateAIComment: Bool {
+        if format == .free { return commentInput.canGenerate }
+        // 질문 제목이 아니라 실제 답변에 내용을 적었는지 확인합니다.
+        return answers.contains {
+            ReflectionCommentInput(format: format.title, title: title, body: $0).canGenerate
+        }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // 이미 저장한 글은 형식을 바꿀 수 없다. 다른 형식으로 옮겨 저장하면
+                // 원래 형식에 쓴 내용(자유 형식의 본문 등)이 사라지기 때문이다.
                 FormatTabBar(selection: $format)
+                    .disabled(journal != nil)
+
+                if journal != nil {
+                    Text("저장한 글은 형식을 바꿀 수 없어요.")
+                        .font(.footnote)
+                        .foregroundStyle(JournalTheme.subText)
+                        .padding(.top, -8)
+                }
 
                 FormatGuideBanner(
                     title: "나의 하루 돌아보기",
@@ -260,6 +278,10 @@ struct JournalEditorView: View {
                 Text(message)
                     .font(.footnote)
                     .foregroundStyle(JournalTheme.subText)
+            } else if !canGenerateAIComment {
+                Text("단어나 문장으로 회고 내용을 적으면 AI 한마디를 만들 수 있어요.")
+                    .font(.footnote)
+                    .foregroundStyle(JournalTheme.subText)
             }
             if aiCommentTask != nil {
                 ProgressView("AI 한마디를 만드는 중…")
@@ -275,7 +297,7 @@ struct JournalEditorView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(JournalTheme.accent)
                 .buttonBorderShape(.roundedRectangle(radius: 16))
-                .disabled(!commentInput.canGenerate || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
+                .disabled(!canGenerateAIComment || isSaving || ReflectionCommentGenerator.unavailableMessage != nil)
             }
         }
         .onDisappear {
@@ -311,7 +333,7 @@ struct JournalEditorView: View {
         let target = journal ?? JournalDatabase(title: "", content: "", category: "", tags: [])
 
         target.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        target.category = JournalDatabase.normalizedCategory(category) ?? ""
+        target.category = JournalDatabase.normalizedCategory(category) ?? JournalCategory.unclassified
         target.tags = tags
         let originalFormat = journal?.effectiveFormat
         let originalAnswers = journal.map { Self.savedAnswers(in: $0, format: format) }
@@ -402,6 +424,6 @@ private extension JournalEditorView {
 //
 // [기간·사진]
 // - 날짜는 JournalPeriodPicker(value: $period), 사진은 JournalPhotoPicker(photoData: $photoData)를 쓴다.
-// - 저장 버튼은 period.isValid(시작일이 오늘 이후이거나 종료일이 시작일보다 빠르면 false)로도 막는다.
+// - 저장 버튼은 period.isValid(하루 회고의 날짜가 오늘 이후이거나 기간 회고의 종료일이 시작일보다 빠르면 false)로도 막는다.
 // - 날짜 규칙(B): 하루 회고도 선택한 날짜를 startDate에 저장하고 endDate는 비운다. 기간 회고는 startDate~endDate다.
 //   날짜가 없는 기존 글은 편집 화면에서 최초 작성일(createdAt)을 보여 주고, 저장하면 그 날짜가 startDate에 들어간다.

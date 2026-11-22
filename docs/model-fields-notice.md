@@ -54,7 +54,7 @@ git merge origin/main
 | --- | --- |
 | 작성·편집 | `tomorrow`, `fourL`은 본문 대신 답변에 내용이 들어갈 수 있어서, 현재의 "제목 또는 본문이 비면 저장 불가" 조건을 형식에 맞게 조정해야 합니다. |
 | 목록·상세 | 키워드 검색 범위(제목, 본문, 카테고리, 태그)에 답변을 넣을지 정해 주세요. |
-| 기간·사진 입력 | `JournalPeriodPicker`, `JournalPhotoPicker`를 작성폼에 연결했습니다(작성·편집 화면 반영). 종료일이 시작일보다 빠르거나 시작일이 오늘 이후일 때의 저장 방지는 `JournalPeriodValue.isValid`가 맡습니다. |
+| 기간·사진 입력 | `JournalPeriodPicker`, `JournalPhotoPicker`를 작성폼에 연결했습니다(작성·편집 화면 반영). 종료일이 시작일보다 빠르거나(기간) 하루 회고의 날짜가 오늘 이후일 때의 저장 방지는 `JournalPeriodValue.isValid`가 맡습니다. |
 | 통계 | 변경 없음. `createdAt`과 `tags`를 그대로 사용합니다. |
 | 공통 모델·필터 | 기존 글과 새 글이 카테고리·태그 필터로 모두 찾아지는지 확인합니다. |
 

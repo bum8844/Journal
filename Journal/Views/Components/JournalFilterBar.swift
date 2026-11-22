@@ -5,6 +5,7 @@ import SwiftUI
 struct JournalFilterBar: View {
     @Binding var selectedCategory: String?
     @Binding var selectedTags: Set<String>
+    @Binding var showsUntaggedOnly: Bool
 
     let categories: [String]
     let tags: [String]
@@ -12,7 +13,7 @@ struct JournalFilterBar: View {
     var horizontalInset: CGFloat = 0
 
     private var isFiltering: Bool {
-        selectedCategory != nil || !selectedTags.isEmpty
+        selectedCategory != nil || !selectedTags.isEmpty || showsUntaggedOnly
     }
 
     var body: some View {
@@ -24,7 +25,7 @@ struct JournalFilterBar: View {
                             selectedCategory = nil
                         }
                         ForEach(categories, id: \.self) { name in
-                            JournalChip(title: name, isSelected: selectedCategory == name) {
+                            JournalChip(title: JournalCategory.title(for: name), isSelected: selectedCategory == name) {
                                 // 선택된 카테고리를 다시 누르면 해제합니다.
                                 selectedCategory = (selectedCategory == name) ? nil : name
                             }
@@ -34,27 +35,32 @@ struct JournalFilterBar: View {
                 }
             }
 
-            if !tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(tags, id: \.self) { tag in
-                            JournalChip(title: "#\(tag)", isSelected: selectedTags.contains(tag)) {
-                                if selectedTags.contains(tag) {
-                                    selectedTags.remove(tag)
-                                } else {
-                                    selectedTags.insert(tag)
-                                }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    // '태그 없음'은 실제 태그를 붙이는 것이 아니라 조회 조건입니다.
+                    JournalChip(title: "태그 없음", isSelected: showsUntaggedOnly) {
+                        showsUntaggedOnly.toggle()
+                        if showsUntaggedOnly { selectedTags.removeAll() }
+                    }
+                    ForEach(tags, id: \.self) { tag in
+                        JournalChip(title: "#\(tag)", isSelected: selectedTags.contains(tag)) {
+                            showsUntaggedOnly = false
+                            if selectedTags.contains(tag) {
+                                selectedTags.remove(tag)
+                            } else {
+                                selectedTags.insert(tag)
                             }
                         }
                     }
-                    .padding(.horizontal, horizontalInset)
                 }
+                .padding(.horizontal, horizontalInset)
             }
 
             if isFiltering {
                 Button {
                     selectedCategory = nil
                     selectedTags.removeAll()
+                    showsUntaggedOnly = false
                 } label: {
                     Label("필터 해제", systemImage: "xmark.circle")
                         .font(.footnote)
@@ -70,10 +76,12 @@ struct JournalFilterBar: View {
 #Preview {
     @Previewable @State var category: String? = "업무"
     @Previewable @State var tags: Set<String> = ["swift"]
+    @Previewable @State var showsUntaggedOnly = false
 
     JournalFilterBar(
         selectedCategory: $category,
         selectedTags: $tags,
+        showsUntaggedOnly: $showsUntaggedOnly,
         categories: ["공부", "업무", "운동"],
         tags: ["swift", "독서", "러닝"],
         horizontalInset: 20
