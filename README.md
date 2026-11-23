@@ -18,7 +18,6 @@
 한 줄씩만 적어도 충분해요.
 
 ![iOS](https://img.shields.io/badge/iOS-27.2%2B-000000?logo=apple&logoColor=white)
-![iPhone | iPad](https://img.shields.io/badge/iPhone%20%7C%20iPad-supported-8E44FF?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/SwiftUI-0A84FF?logo=swift&logoColor=white)
 ![SwiftData](https://img.shields.io/badge/SwiftData-34C759?logo=swift&logoColor=white)
@@ -278,7 +277,7 @@
 
 | 항목 | 값 |
 | --- | --- |
-| 플랫폼 | iPhone, iPad (iOS) |
+| 플랫폼 | iPhone (iOS) |
 | 최소 배포 버전 | iOS 27.2 (`IPHONEOS_DEPLOYMENT_TARGET`) |
 | 언어 | Swift 5 (`SWIFT_VERSION`) |
 | UI / 저장소 | SwiftUI / SwiftData |
